@@ -3,56 +3,92 @@ package holder
 import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"gitlab.com/confiks/ctcl/issuer"
 	"gitlab.com/confiks/ctcl/common"
 )
 
-type secretKey struct {
+var credentials []*gabi.Credential
+
+type HolderSkMessage struct {
 	Key *big.Int
 }
 
-var credentials []*gabi.Credential
+func GenerateHolderSk() *HolderSkMessage {
+	return &HolderSkMessage{
+		Key: common.RandomBigInt(common.GabiSystemParameters.Lm),
+	}
+}
 
-func Start() {
-	clientSk := generateSecretKey()
+type CreateCommitmentsMessage struct {
+	IssuerPkXml string
+	IssuerNonce *big.Int
+	HolderSk *big.Int
+}
 
-	issuerPk, err := gabi.NewPublicKeyFromXML(common.IssuerPkXml)
+// TODO: We either need to modify gabi to export credBuilder's vPrime,
+//   so we don't have to maintain state here, or keep state here (properly).
+var dirtyHack *gabi.CredentialBuilder
+
+func CreateCommitment(cmmMsg *CreateCommitmentsMessage) *gabi.IssueCommitmentMessage {
+	issuerPk, err := gabi.NewPublicKeyFromXML(cmmMsg.IssuerPkXml)
 	if err != nil {
-		panic("Error loading issuer public key")
+		panic("Could not unmarshal issuer public key")
 	}
 
-	serverSession := issuer.NewSession()
-	credBuilder, issuerProofNonce := issuanceProofBuilders(issuerPk, clientSk)
+	// Create commitments
+	credBuilder, icm := createCommitments(issuerPk, cmmMsg.IssuerNonce, cmmMsg.HolderSk)
 
-	builders := gabi.ProofBuilderList([]gabi.ProofBuilder{credBuilder})
-	issueCommitmentMessage := &gabi.IssueCommitmentMessage{
-		Proofs: builders.BuildProofList(common.ContextOne, serverSession.Nonce, false),
-		Nonce2: issuerProofNonce,
-	}
+	// FIXME
+	dirtyHack = credBuilder
 
-	ism := issuer.PostCommitments(serverSession.SessionId, issueCommitmentMessage)
-	cred, err := constructCredentials(ism, credBuilder, serverSession.AttributeValues)
+	return icm
+}
+
+type CreateCredentialMessage struct {
+	HolderSk *big.Int
+	IssueSignatureMessage *gabi.IssueSignatureMessage
+	AttributeValues []string
+}
+
+func CreateCredential(credMsg *CreateCredentialMessage) *gabi.Credential {
+	// FIXME
+	credBuilder := dirtyHack
+
+	cred, err := constructCredential(credMsg.IssueSignatureMessage, credBuilder, credMsg.AttributeValues)
 	if err != nil {
 		panic("Error while constructing credentials")
 	}
 
-	credentials = append(credentials, cred)
+	return cred
 }
 
-func generateSecretKey() *secretKey {
-	return &secretKey{
-		Key: common.RandomBigInt(new(big.Int).Lsh(big.NewInt(1), uint(gabi.DefaultSystemParameters[2048].Lm))),
+func Disclose() {
+	// doSession -> getProof -> client.Proofs ->
+	// client.ProofBuilders
+	// BuildProofList
+
+
+}
+
+func createCommitments(issuerPk *gabi.PublicKey, issuerNonce, holderSk *big.Int) (*gabi.CredentialBuilder, *gabi.IssueCommitmentMessage) {
+	credBuilder, holderNonce := issuanceProofBuilders(issuerPk, holderSk)
+
+	builders := gabi.ProofBuilderList([]gabi.ProofBuilder{credBuilder})
+	icm := &gabi.IssueCommitmentMessage{
+		Proofs: builders.BuildProofList(common.BigOne, issuerNonce, false),
+		Nonce2: holderNonce,
 	}
+
+	return credBuilder, icm
 }
 
-func issuanceProofBuilders(issuerPk *gabi.PublicKey, clientSk *secretKey) (*gabi.CredentialBuilder, *big.Int) {
-	issuerProofNonce := common.GenerateNonce()
-	credBuilder := gabi.NewCredentialBuilder(issuerPk, common.ContextOne, clientSk.Key, issuerProofNonce, []int{})
+func issuanceProofBuilders(issuerPk *gabi.PublicKey, holderSk *big.Int) (*gabi.CredentialBuilder, *big.Int) {
+	holderNonce := common.GenerateNonce()
+	credBuilder := gabi.NewCredentialBuilder(issuerPk, common.BigOne, holderSk, holderNonce, []int{})
 
-	return credBuilder, issuerProofNonce
+	return credBuilder, holderNonce
 }
 
-func constructCredentials(ism *gabi.IssueSignatureMessage, credBuilder *gabi.CredentialBuilder, attributeValues []string) (*gabi.Credential, error) {
+func constructCredential(ism *gabi.IssueSignatureMessage, credBuilder *gabi.CredentialBuilder, attributeValues []string) (*gabi.Credential, error) {
 	attributeInts, err := common.ComputeAttributes(attributeValues)
 	if err != nil {
 		return nil, err

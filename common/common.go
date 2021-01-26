@@ -8,19 +8,26 @@ import (
 	"github.com/privacybydesign/gabi/big"
 )
 
-var ContextOne = big.NewInt(1)
+var BigOne = big.NewInt(1)
+var GabiSystemParameters = gabi.DefaultSystemParameters[2048]
+
 var AttributeTypes = []string{"testType", "testedAt"}
 
-func RandomBigInt(limit *big.Int) *big.Int {
-	res, err := big.RandInt(rand.Reader, limit)
+// RandomBigInt returns a random big integer value in the range
+// [0,(2^numBits)-1], inclusive.
+func RandomBigInt(numBits uint) *big.Int {
+	t := new(big.Int).Lsh(BigOne, numBits)
+
+	r, err := big.RandInt(rand.Reader, t)
 	if err != nil {
 		panic(fmt.Sprintf("big.RandInt failed: %v", err))
 	}
-	return res
+
+	return r
 }
 
 func GenerateNonce() *big.Int {
-	return RandomBigInt(new(big.Int).Lsh(big.NewInt(1), uint(gabi.DefaultSystemParameters[2048].Lstatzk)))
+	return RandomBigInt(GabiSystemParameters.Lstatzk)
 }
 
 func ComputeAttributes(attributeValues []string) ([]*big.Int, error) {

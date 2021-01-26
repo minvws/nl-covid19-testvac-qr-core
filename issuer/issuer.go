@@ -1,5 +1,7 @@
 package issuer
 
+import "C"
+
 import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
@@ -14,62 +16,66 @@ type IssuanceSession struct {
 
 var issuanceSessions = map[int]*IssuanceSession{}
 
-var sessionIdCounter = 0
-func getSessionId() int {
-	sessionIdCounter++
-	return sessionIdCounter
+//var sessionIdCounter = 0
+//func getSessionId() int {
+//	sessionIdCounter++
+//	return sessionIdCounter
+//}
+//
+//func NewSession() *IssuanceSession {
+//	session := &IssuanceSession{
+//		SessionId:       getSessionId(),
+//		Nonce:           common.GenerateNonce(),
+//		AttributeValues: []string{"foo", "bar"},
+//	}
+//
+//	issuanceSessions[session.SessionId] = session
+//	return session
+//}
+
+func GetIssuerNonce() *big.Int {
+	return common.GenerateNonce()
 }
 
-var issuerPk *gabi.PublicKey = nil
-var issuerSk *gabi.PrivateKey = nil
-
-func LoadKeys() {
-	var err error
-	issuerPk, err = gabi.NewPublicKeyFromXML(common.IssuerPkXml)
-	issuerSk, err = gabi.NewPrivateKeyFromXML(issuerSkXml, false)
+func Issue(issuerPkXml, issuerSkXml string, issuerNonce *big.Int, attributeValues []string, cmmMsg *gabi.IssueCommitmentMessage) *gabi.IssueSignatureMessage {
+	issuerPk, err := gabi.NewPublicKeyFromXML(issuerPkXml)
 	if err != nil {
-		panic("Error loading issuer keys")
+		panic("Could not deserialize issuer public key")
 	}
+
+	issuerSk, err := gabi.NewPrivateKeyFromXML(issuerSkXml, false)
+	if err != nil {
+		panic("Could not deserialize issuer private key")
+	}
+
+	return issue(issuerPk, issuerSk, issuerNonce, attributeValues, cmmMsg)
 }
 
-func NewSession() *IssuanceSession {
-	session := &IssuanceSession{
-		SessionId:       getSessionId(),
-		Nonce:           common.GenerateNonce(),
-		AttributeValues: []string{"foo", "bar"},
-	}
-
-	issuanceSessions[session.SessionId] = session
-	return session
-}
-
-func PostCommitments(sessionId int, commitments *gabi.IssueCommitmentMessage) *gabi.IssueSignatureMessage {
-	issuanceSession, ok := issuanceSessions[sessionId]
-	if !ok {
-		panic("Invalid session")
-	}
-
-	// handleSessionCommitments -> handlePostCommitments
-	if len(commitments.Proofs) != 1 {
-		panic("Incorrect amount of proofs")
-	}
-
+func issue(issuerPk *gabi.PublicKey, issuerSk *gabi.PrivateKey, issuerNonce *big.Int, attributeValues []string, cmmMsg *gabi.IssueCommitmentMessage) *gabi.IssueSignatureMessage {
 	// Compute attribute values
-	issuer := gabi.NewIssuer(issuerSk, issuerPk, common.ContextOne)
-	proof, ok := commitments.Proofs[0].(*gabi.ProofU)
-	if !ok {
-		panic("Received invalid issuance commitment")
-	}
-
-	attributeInts, err := common.ComputeAttributes(issuanceSession.AttributeValues)
+	attributeInts, err := common.ComputeAttributes(attributeValues)
 	if err != nil {
 		panic("Error during computing attributes: " + err.Error())
 	}
 
+	// Instantiate issuer
+	issuer := gabi.NewIssuer(issuerSk, issuerPk, common.BigOne)
+
+
+	// Get commitment
+	if len(cmmMsg.Proofs) != 1 {
+		panic("Incorrect amount of proofs")
+	}
+
+	proof, ok := cmmMsg.Proofs[0].(*gabi.ProofU)
+	if !ok {
+		panic("Received invalid issuance commitment")
+	}
+
 	// Compute CL signatures
-	sig, err := issuer.IssueSignature(proof.U, attributeInts, nil, commitments.Nonce2, []int{})
+	ism, err := issuer.IssueSignature(proof.U, attributeInts, nil, cmmMsg.Nonce2, []int{})
 	if err != nil {
 		panic("Issuance failed: " + err.Error())
 	}
-	return sig
+	return ism
 }
