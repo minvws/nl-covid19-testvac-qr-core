@@ -16,24 +16,7 @@ type IssuanceSession struct {
 
 var issuanceSessions = map[int]*IssuanceSession{}
 
-//var sessionIdCounter = 0
-//func getSessionId() int {
-//	sessionIdCounter++
-//	return sessionIdCounter
-//}
-//
-//func NewSession() *IssuanceSession {
-//	session := &IssuanceSession{
-//		SessionId:       getSessionId(),
-//		Nonce:           common.GenerateNonce(),
-//		AttributeValues: []string{"foo", "bar"},
-//	}
-//
-//	issuanceSessions[session.SessionId] = session
-//	return session
-//}
-
-func GetIssuerNonce() *big.Int {
+func GenerateIssuerNonce() *big.Int {
 	return common.GenerateNonce()
 }
 
@@ -61,6 +44,7 @@ func issue(issuerPk *gabi.PublicKey, issuerSk *gabi.PrivateKey, issuerNonce *big
 	// Instantiate issuer
 	issuer := gabi.NewIssuer(issuerSk, issuerPk, common.BigOne)
 
+	// TODO: Verify commitment proofs against issuerNonce
 
 	// Get commitment
 	if len(cmmMsg.Proofs) != 1 {

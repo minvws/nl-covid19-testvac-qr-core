@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gitlab.com/confiks/ctcl/holder"
 	"gitlab.com/confiks/ctcl/issuer"
 )
@@ -8,7 +9,7 @@ import (
 func main() {
 	holderSkMessage := holder.GenerateHolderSk()
 
-	issuerNonce := issuer.GetIssuerNonce()
+	issuerNonce := issuer.GenerateIssuerNonce()
 
 	cmmMsg := &holder.CreateCommitmentsMessage{
 		IssuerPkXml: issuerPkXml,
@@ -24,8 +25,10 @@ func main() {
 		HolderSk: holderSkMessage.Key,
 		IssueSignatureMessage: ism,
 		AttributeValues: attributeValues,
-
 	}
-	holder.CreateCredential(credMsg)
+	cred := holder.CreateCredential(credMsg)
+
+	asn1Proof := holder.DiscloseAll(cred)
+	fmt.Printf("Got proof size of %d bytes", len(asn1Proof))
 }
 

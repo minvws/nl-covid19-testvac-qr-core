@@ -10,8 +10,8 @@ import (
 )
 
 // export GetIssuingNonce
-func CGetIssuerNonceB64() *C.Char {
-	issuerNonceB64, err := json.Marshal(issuer.GetIssuerNonce())
+func GenerateIssuerNonceB64() *C.Char {
+	issuerNonceB64, err := json.Marshal(issuer.GenerateIssuerNonce())
 	if err != nil {
 		panic("Could not serialize issuer nonce")
 	}
@@ -20,8 +20,7 @@ func CGetIssuerNonceB64() *C.Char {
 }
 
 // export Issue
-func CIssue(issuerPkXml, issuerSkXml, issuerNonceB64, commitmentsJson *C.Char) *C.Char {
-	// issuerNonce
+func Issue(issuerPkXml, issuerSkXml, issuerNonceB64, commitmentsJson *C.Char) *C.Char {
 	issuerNonce := new(big.Int)
 	err := issuerNonce.UnmarshalJSON(C.GoString(issuerNonceB64))
 	if err != nil {
