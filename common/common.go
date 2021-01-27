@@ -2,16 +2,31 @@ package common
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
+	gobig "math/big"
+	"strconv"
 )
 
 var BigOne = big.NewInt(1)
 var GabiSystemParameters = gabi.DefaultSystemParameters[2048]
 
 var AttributeTypes = []string{"testType", "testedAt"}
+
+type ProofSerialization struct {
+	UnixTimeSeconds int64
+	DisclosureChoices []bool
+	C                 *gobig.Int
+	A                 *gobig.Int
+	EResponse         *gobig.Int
+	VResponse         *gobig.Int
+	AResponses        []*gobig.Int
+	ADisclosed        []*gobig.Int
+}
 
 // RandomBigInt returns a random big integer value in the range
 // [0,(2^numBits)-1], inclusive.
@@ -47,4 +62,19 @@ func ComputeAttributes(attributeValues []string) ([]*big.Int, error) {
 	}
 
 	return attrs, nil
+}
+
+func CalculateTimeBasedChallenge(unixTimeSeconds int64) *big.Int {
+	// Calculate the challenge as the sha256sum of the decimal string representation
+	// of  the given unix timestamp in seconds. Cut off to appropriate amount of bits
+	timeBytes := []byte(strconv.FormatInt(unixTimeSeconds, 10))
+	timeHash := sha256.Sum256(timeBytes)
+
+	challengeByteSize := GabiSystemParameters.Lstatzk / 8
+	return new(big.Int).SetBytes(timeHash[:challengeByteSize])
+}
+
+func DebugSerializableStruct(s interface{}) {
+	str, _ := json.Marshal(s)
+	fmt.Println(string(str))
 }

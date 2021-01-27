@@ -1,16 +1,12 @@
 package holder
 
 import (
-	"crypto/sha256"
 	"encoding/asn1"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	"gitlab.com/confiks/ctcl/common"
 	gobig "math/big"
-	"strconv"
 )
-
-var credentials []*gabi.Credential
 
 type HolderSkMessage struct {
 	Key *big.Int
@@ -25,7 +21,7 @@ func GenerateHolderSk() *HolderSkMessage {
 type CreateCommitmentsMessage struct {
 	IssuerPkXml string
 	IssuerNonce *big.Int
-	HolderSk *big.Int
+	HolderSk    *big.Int
 }
 
 // TODO: We either need to modify gabi to export credBuilder's vPrime,
@@ -48,9 +44,9 @@ func CreateCommitment(cmmMsg *CreateCommitmentsMessage) *gabi.IssueCommitmentMes
 }
 
 type CreateCredentialMessage struct {
-	HolderSk *big.Int
+	HolderSk              *big.Int
 	IssueSignatureMessage *gabi.IssueSignatureMessage
-	AttributeValues []string
+	AttributeValues       []string
 }
 
 func CreateCredential(credMsg *CreateCredentialMessage) *gabi.Credential {
@@ -66,72 +62,69 @@ func CreateCredential(credMsg *CreateCredentialMessage) *gabi.Credential {
 }
 
 func DiscloseAll(cred *gabi.Credential) []byte {
-	disclosureChoices := make([]bool, len(cred.Attributes) - 1)
+	disclosureChoices := make([]bool, len(cred.Attributes)-1)
 	for i, _ := range disclosureChoices {
 		disclosureChoices[i] = true
 	}
 
-	return Disclose(cred, disclosureChoices, 1611695679)
+	//return Disclose(cred, disclosureChoices, time.Now().Unix())
+	return Disclose(cred, disclosureChoices, 12345678)
 }
 
-func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds int) []byte {
+func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds int64) []byte {
 	// The first attribute (which is the secret key) can never be disclosed
-	if len(disclosureChoices) != len(cred.Attributes) - 1 {
+	disclosureChoices = append([]bool{false}, disclosureChoices...)
+	if len(disclosureChoices) != len(cred.Attributes) {
 		panic("Invalid amount of disclosure choices")
 	}
 
 	// Calculate indexes of disclosed attributes (again skipping the first attribute)
-	var disclosedAttributes []int
+	var disclosedIndices []int
 	for i, disclosed := range disclosureChoices {
 		if disclosed {
-			disclosedAttributes = append(disclosedAttributes, i + 1)
+			disclosedIndices = append(disclosedIndices, i)
 		}
 	}
 
-	// Calculate the challenge as the sha256sum of the decimal string representation
-	// of  the given unix timestamp in seconds. Cut off to appropriate amount of bits
-	timeBytes := []byte(strconv.Itoa(unixTimeSeconds))
-	timeHash := sha256.Sum256(timeBytes)
-
-	challengeByteSize := common.GabiSystemParameters.Lstatzk / 8
-	challenge := new(big.Int).SetBytes(timeHash[:challengeByteSize])
-
 	// Build proof
 	var dpbs gabi.ProofBuilderList
-	dpb, err := cred.CreateDisclosureProofBuilder(disclosedAttributes, false)
+	dpb, err := cred.CreateDisclosureProofBuilder(disclosedIndices, false)
 	if err != nil {
 		panic("Failed to create disclosure proof builder: " + err.Error())
 	}
 
 	dpbs = append(dpbs, dpb)
-	proofList := dpbs.BuildProofList(common.BigOne, challenge, false)
+
+	timeBasedChallenge := common.CalculateTimeBasedChallenge(unixTimeSeconds)
+	proofList := dpbs.BuildProofList(common.BigOne, timeBasedChallenge, false)
 	if len(proofList) != 1 {
 		panic("Invalid amount of proofs")
 	}
 
 	proof := proofList[0].(*gabi.ProofD)
 
+	common.DebugSerializableStruct(proof)
+
 	// Serialize proof
-	proofStruct := []*gobig.Int{
-		proof.C.Go(),
-		proof.A.Go(),
-		proof.EResponse.Go(),
-		proof.VResponse.Go(),
-
-		// Secret key
-		proof.AResponses[0].Go(),
-	}
-
-	// Add either the disclosed attribute, or the proof hiding it
+	var aResponses, aDisclosed []*gobig.Int
 	for i, disclosed := range disclosureChoices {
 		if disclosed {
-			proofStruct = append(proofStruct, proof.ADisclosed[i + 1].Go())
+			aDisclosed = append(aDisclosed, proof.ADisclosed[i].Go())
 		} else {
-			proofStruct = append(proofStruct, proof.AResponses[i + 1].Go())
+			aResponses = append(aResponses, proof.AResponses[i].Go())
 		}
 	}
 
-	proofAsn1, err := asn1.Marshal(proofStruct)
+	proofAsn1, err := asn1.Marshal(common.ProofSerialization{
+		UnixTimeSeconds:   unixTimeSeconds,
+		DisclosureChoices: disclosureChoices,
+		C:                 proof.C.Go(),
+		A:                 proof.A.Go(),
+		EResponse:         proof.EResponse.Go(),
+		VResponse:         proof.VResponse.Go(),
+		AResponses:        aResponses,
+		ADisclosed:        aDisclosed,
+	})
 	if err != nil {
 		panic("Could not ASN1 marshal proof: " + err.Error())
 	}

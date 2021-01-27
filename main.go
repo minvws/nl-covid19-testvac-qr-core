@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gitlab.com/confiks/ctcl/holder"
 	"gitlab.com/confiks/ctcl/issuer"
+	"gitlab.com/confiks/ctcl/verifier"
 )
 
 func main() {
@@ -28,7 +29,22 @@ func main() {
 	}
 	cred := holder.CreateCredential(credMsg)
 
-	asn1Proof := holder.DiscloseAll(cred)
-	fmt.Printf("Got proof size of %d bytes", len(asn1Proof))
+	proofAsn1 := holder.DiscloseAll(cred)
+	fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
+
+	verifyMessage := &verifier.VerifyMessage{
+		IssuerPkXml: issuerPkXml,
+		ProofAsn1: proofAsn1,
+	}
+
+	verifiedValues, unixTimeSeconds, err := verifier.Verify(verifyMessage)
+	if err != nil {
+		fmt.Println("Invalid proof")
+	} else {
+		fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
+		for k, v := range verifiedValues {
+			fmt.Printf("%s: %s\n", k, *v)
+		}
+	}
 }
 
