@@ -78,7 +78,7 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 		panic("Invalid amount of disclosure choices")
 	}
 
-	// Calculate indexes of disclosed attributes (again skipping the first attribute)
+	// Calculate indexes of disclosed attributes
 	var disclosedIndices []int
 	for i, disclosed := range disclosureChoices {
 		if disclosed {
@@ -102,8 +102,6 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 	}
 
 	proof := proofList[0].(*gabi.ProofD)
-
-	common.DebugSerializableStruct(proof)
 
 	// Serialize proof
 	var aResponses, aDisclosed []*gobig.Int
