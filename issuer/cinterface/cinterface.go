@@ -20,9 +20,9 @@ func GenerateIssuerNonceB64() *C.Char {
 }
 
 // export Issue
-func Issue(issuerPkXml, issuerSkXml, issuerNonceB64, commitmentsJson *C.Char) *C.Char {
+func Issue(issuerPkXml, issuerSkXml, issuerNonceB64, commitmentsJson string, attributeValues []string) *C.Char {
 	issuerNonce := new(big.Int)
-	err := issuerNonce.UnmarshalJSON(C.GoString(issuerNonceB64))
+	err := issuerNonce.UnmarshalJSON([]byte(issuerNonceB64))
 	if err != nil {
 		panic("Could not deserialize issuerNonce")
 	}
@@ -33,11 +33,11 @@ func Issue(issuerPkXml, issuerSkXml, issuerNonceB64, commitmentsJson *C.Char) *C
 
 	// Commitments
 	var commitments *gabi.IssueCommitmentMessage
-	err = json.Unmarshal(commitmentsJson.GoString())
+	err = json.Unmarshal([]byte(commitmentsJson), commitments)
 	if err != nil {
 		panic("Could not deserialize commitments")
 	}
 
-	sig := issuer.Issue(C.GoString(issuerPkXml), C.GoString(issuerSkXml), issuerNonce, []string {"foo", "bar"}, commitments)
+	sig := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, commitments)
 	return C.CString(json.Marshal(sig))
 }
