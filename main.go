@@ -17,7 +17,7 @@ func main() {
 		IssuerNonce: issuerNonce,
 		HolderSk: holderSkMessage.Key,
 	}
-	icm := holder.CreateCommitment(cmmMsg)
+	icm, _ := holder.CreateCommitment(cmmMsg)
 
 	attributeValues := []string{"foo", "bar"}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
@@ -27,9 +27,9 @@ func main() {
 		IssueSignatureMessage: ism,
 		AttributeValues: attributeValues,
 	}
-	cred := holder.CreateCredential(credMsg)
+	cred, _ := holder.CreateCredential(credMsg)
 
-	proofAsn1 := holder.DiscloseAll(cred)
+	proofAsn1, _ := holder.DiscloseAll(cred)
 	fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
 
 	verifyMessage := &verifier.VerifyMessage{

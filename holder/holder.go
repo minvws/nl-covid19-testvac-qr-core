@@ -2,6 +2,7 @@ package holder
 
 import (
 	"encoding/asn1"
+	"github.com/go-errors/errors"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	"gitlab.com/confiks/ctcl/common"
@@ -28,10 +29,10 @@ type CreateCommitmentsMessage struct {
 //   so we don't have to maintain state here, or keep state here (properly).
 var dirtyHack *gabi.CredentialBuilder
 
-func CreateCommitment(cmmMsg *CreateCommitmentsMessage) *gabi.IssueCommitmentMessage {
+func CreateCommitment(cmmMsg *CreateCommitmentsMessage) (*gabi.IssueCommitmentMessage, error) {
 	issuerPk, err := gabi.NewPublicKeyFromXML(cmmMsg.IssuerPkXml)
 	if err != nil {
-		panic("Could not unmarshal issuer public key: " + err.Error())
+		return nil, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0)
 	}
 
 	// Create commitments
@@ -40,7 +41,7 @@ func CreateCommitment(cmmMsg *CreateCommitmentsMessage) *gabi.IssueCommitmentMes
 	// FIXME
 	dirtyHack = credBuilder
 
-	return icm
+	return icm, nil
 }
 
 type CreateCredentialMessage struct {
@@ -49,20 +50,20 @@ type CreateCredentialMessage struct {
 	AttributeValues       []string
 }
 
-func CreateCredential(credMsg *CreateCredentialMessage) *gabi.Credential {
+func CreateCredential(credMsg *CreateCredentialMessage) (*gabi.Credential, error) {
 	// FIXME
 	credBuilder := dirtyHack
 
 	cred, err := constructCredential(credMsg.IssueSignatureMessage, credBuilder, credMsg.AttributeValues)
 	if err != nil {
-		panic("Could not construct credentials: " + err.Error())
+		return nil, errors.WrapPrefix(err, "Could not construct credential", 0)
 	}
 
-	return cred
+	return cred, nil
 }
 
-func DiscloseAll(cred *gabi.Credential) []byte {
-	disclosureChoices := make([]bool, len(cred.Attributes)-1)
+func DiscloseAll(cred *gabi.Credential) ([]byte, error) {
+	disclosureChoices := make([]bool, len(cred.Attributes) - 1)
 	for i, _ := range disclosureChoices {
 		disclosureChoices[i] = true
 	}
@@ -71,11 +72,11 @@ func DiscloseAll(cred *gabi.Credential) []byte {
 	return Disclose(cred, disclosureChoices, 12345678)
 }
 
-func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds int64) []byte {
+func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds int64) ([]byte, error) {
 	// The first attribute (which is the secret key) can never be disclosed
 	disclosureChoices = append([]bool{false}, disclosureChoices...)
 	if len(disclosureChoices) != len(cred.Attributes) {
-		panic("Invalid amount of disclosure choices")
+		return nil, errors.Errorf("Invalid amount of disclosure choices")
 	}
 
 	// Calculate indexes of disclosed attributes
@@ -90,7 +91,7 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 	var dpbs gabi.ProofBuilderList
 	dpb, err := cred.CreateDisclosureProofBuilder(disclosedIndices, false)
 	if err != nil {
-		panic("Failed to create disclosure proof builder: " + err.Error())
+		return nil, errors.WrapPrefix(err,"Failed to create disclosure proof builder", 0)
 	}
 
 	dpbs = append(dpbs, dpb)
@@ -98,7 +99,7 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 	timeBasedChallenge := common.CalculateTimeBasedChallenge(unixTimeSeconds)
 	proofList := dpbs.BuildProofList(common.BigOne, timeBasedChallenge, false)
 	if len(proofList) != 1 {
-		panic("Invalid amount of proofs")
+		return nil, errors.Errorf("Invalid amount of proofs")
 	}
 
 	proof := proofList[0].(*gabi.ProofD)
@@ -124,10 +125,10 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 		ADisclosed:        aDisclosed,
 	})
 	if err != nil {
-		panic("Could not ASN1 marshal proof: " + err.Error())
+		return nil, errors.WrapPrefix(err, "Could not ASN1 marshal proof", 0)
 	}
 
-	return proofAsn1
+	return proofAsn1, nil
 }
 
 func createCommitments(issuerPk *gabi.PublicKey, issuerNonce, holderSk *big.Int) (*gabi.CredentialBuilder, *gabi.IssueCommitmentMessage) {
