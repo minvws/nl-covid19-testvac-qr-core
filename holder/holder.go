@@ -6,55 +6,20 @@ import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	"gitlab.com/confiks/ctcl/common"
-	gobig "math/big"
+	"time"
 )
 
-type HolderSkMessage struct {
-	Key *big.Int
+func GenerateHolderSk() *big.Int {
+	return common.RandomBigInt(common.GabiSystemParameters.Lm)
 }
 
-func GenerateHolderSk() *HolderSkMessage {
-	return &HolderSkMessage{
-		Key: common.RandomBigInt(common.GabiSystemParameters.Lm),
-	}
+func CreateCommitment(issuerPk *gabi.PublicKey, issuerNonce, holderSk *big.Int) (*gabi.CredentialBuilder, *gabi.IssueCommitmentMessage) {
+	credBuilder, icm := createCommitments(issuerPk, issuerNonce, holderSk)
+	return credBuilder, icm
 }
 
-type CreateCommitmentsMessage struct {
-	IssuerPkXml string
-	IssuerNonce *big.Int
-	HolderSk    *big.Int
-}
-
-// TODO: We either need to modify gabi to export credBuilder's vPrime,
-//   so we don't have to maintain state here, or keep state here (properly).
-var dirtyHack *gabi.CredentialBuilder
-
-func CreateCommitment(cmmMsg *CreateCommitmentsMessage) (*gabi.IssueCommitmentMessage, error) {
-	issuerPk, err := gabi.NewPublicKeyFromXML(cmmMsg.IssuerPkXml)
-	if err != nil {
-		return nil, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0)
-	}
-
-	// Create commitments
-	credBuilder, icm := createCommitments(issuerPk, cmmMsg.IssuerNonce, cmmMsg.HolderSk)
-
-	// FIXME
-	dirtyHack = credBuilder
-
-	return icm, nil
-}
-
-type CreateCredentialMessage struct {
-	HolderSk              *big.Int
-	IssueSignatureMessage *gabi.IssueSignatureMessage
-	AttributeValues       []string
-}
-
-func CreateCredential(credMsg *CreateCredentialMessage) (*gabi.Credential, error) {
-	// FIXME
-	credBuilder := dirtyHack
-
-	cred, err := constructCredential(credMsg.IssueSignatureMessage, credBuilder, credMsg.AttributeValues)
+func CreateCredential(credBuilder *gabi.CredentialBuilder, ism *gabi.IssueSignatureMessage, attributeValues []string) (*gabi.Credential, error) {
+	cred, err := constructCredential(ism, credBuilder, attributeValues)
 	if err != nil {
 		return nil, errors.WrapPrefix(err, "Could not construct credential", 0)
 	}
@@ -62,17 +27,36 @@ func CreateCredential(credMsg *CreateCredentialMessage) (*gabi.Credential, error
 	return cred, nil
 }
 
-func DiscloseAll(cred *gabi.Credential) ([]byte, error) {
-	disclosureChoices := make([]bool, len(cred.Attributes) - 1)
-	for i, _ := range disclosureChoices {
-		disclosureChoices[i] = true
-	}
-
-	//return Disclose(cred, disclosureChoices, time.Now().Unix())
-	return Disclose(cred, disclosureChoices, 12345678)
+func DiscloseAll(cred *gabi.Credential, challenge *big.Int) ([]byte, error) {
+	return Disclose(cred, maximumDisclosureChoices(cred), challenge)
 }
 
-func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds int64) ([]byte, error) {
+func DiscloseAllWithTime(cred *gabi.Credential) ([]byte, error) {
+	return DiscloseWithTime(cred, maximumDisclosureChoices(cred))
+}
+
+func maximumDisclosureChoices(cred *gabi.Credential) []bool {
+	choices := make([]bool, len(cred.Attributes)-1)
+	for i, _ := range choices {
+		choices[i] = true
+	}
+
+	return choices
+}
+
+func DiscloseWithTime(cred *gabi.Credential, disclosureChoices []bool) ([]byte, error) {
+	return disclose(cred, disclosureChoices, nil)
+}
+
+func Disclose(cred *gabi.Credential, disclosureChoices []bool, challenge *big.Int) ([]byte, error) {
+	if challenge == nil {
+		return nil, errors.Errorf("No challenge was provided")
+	}
+
+	return disclose(cred, disclosureChoices, challenge)
+}
+
+func disclose(cred *gabi.Credential, disclosureChoices []bool, challenge *big.Int) ([]byte, error) {
 	// The first attribute (which is the secret key) can never be disclosed
 	disclosureChoices = append([]bool{false}, disclosureChoices...)
 	if len(disclosureChoices) != len(cred.Attributes) {
@@ -87,17 +71,24 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 		}
 	}
 
+	// If no challenge is provided, use a time-based 'challenge', and
+	// save the time in the serialization of the proof
+	ps := common.ProofSerialization{}
+	if challenge == nil {
+		ps.UnixTimeSeconds = time.Now().Unix()
+		challenge = common.CalculateTimeBasedChallenge(ps.UnixTimeSeconds)
+	}
+
 	// Build proof
 	var dpbs gabi.ProofBuilderList
 	dpb, err := cred.CreateDisclosureProofBuilder(disclosedIndices, false)
 	if err != nil {
-		return nil, errors.WrapPrefix(err,"Failed to create disclosure proof builder", 0)
+		return nil, errors.WrapPrefix(err, "Failed to create disclosure proof builder", 0)
 	}
 
 	dpbs = append(dpbs, dpb)
 
-	timeBasedChallenge := common.CalculateTimeBasedChallenge(unixTimeSeconds)
-	proofList := dpbs.BuildProofList(common.BigOne, timeBasedChallenge, false)
+	proofList := dpbs.BuildProofList(common.BigOne, challenge, false)
 	if len(proofList) != 1 {
 		return nil, errors.Errorf("Invalid amount of proofs")
 	}
@@ -105,25 +96,21 @@ func Disclose(cred *gabi.Credential, disclosureChoices []bool, unixTimeSeconds i
 	proof := proofList[0].(*gabi.ProofD)
 
 	// Serialize proof
-	var aResponses, aDisclosed []*gobig.Int
+	ps.DisclosureChoices = disclosureChoices
+	ps.C = proof.C.Go()
+	ps.A = proof.A.Go()
+	ps.EResponse = proof.EResponse.Go()
+	ps.VResponse = proof.VResponse.Go()
+
 	for i, disclosed := range disclosureChoices {
 		if disclosed {
-			aDisclosed = append(aDisclosed, proof.ADisclosed[i].Go())
+			ps.ADisclosed = append(ps.ADisclosed, proof.ADisclosed[i].Go())
 		} else {
-			aResponses = append(aResponses, proof.AResponses[i].Go())
+			ps.AResponses = append(ps.AResponses, proof.AResponses[i].Go())
 		}
 	}
 
-	proofAsn1, err := asn1.Marshal(common.ProofSerialization{
-		UnixTimeSeconds:   unixTimeSeconds,
-		DisclosureChoices: disclosureChoices,
-		C:                 proof.C.Go(),
-		A:                 proof.A.Go(),
-		EResponse:         proof.EResponse.Go(),
-		VResponse:         proof.VResponse.Go(),
-		AResponses:        aResponses,
-		ADisclosed:        aDisclosed,
-	})
+	proofAsn1, err := asn1.Marshal(ps)
 	if err != nil {
 		return nil, errors.WrapPrefix(err, "Could not ASN1 marshal proof", 0)
 	}

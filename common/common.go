@@ -18,7 +18,7 @@ var GabiSystemParameters = gabi.DefaultSystemParameters[2048]
 var AttributeTypes = []string{"testType", "testedAt"}
 
 type ProofSerialization struct {
-	UnixTimeSeconds int64
+	UnixTimeSeconds   int64
 	DisclosureChoices []bool
 	C                 *gobig.Int
 	A                 *gobig.Int

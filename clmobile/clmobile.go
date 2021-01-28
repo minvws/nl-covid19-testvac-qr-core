@@ -2,58 +2,103 @@ package clmobile
 
 import (
 	"encoding/json"
+	"github.com/go-errors/errors"
+	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/big"
 	"gitlab.com/confiks/ctcl/holder"
 )
 
-func GenerateHolderSk() []byte {
-	holderSkMessageJson, err := json.Marshal(holder.GenerateHolderSk())
+func GenerateHolderSk() ([]byte, string) {
+	holderSkJson, err := json.Marshal(holder.GenerateHolderSk())
 	if err != nil {
-		panic("Could not serialize holder secret key")
+		return nil, errors.Errorf("Could not serialize holder secret key").Error()
 	}
 
-	return holderSkMessageJson
+	return holderSkJson, ""
 }
 
-func CreateCommitmentMessage(cmmMsgJson []byte) []byte {
-	cmmMsg := &holder.CreateCommitmentsMessage{}
-	err := json.Unmarshal(cmmMsgJson, cmmMsg)
+type CreateCommitmentsMessage struct {
+	IssuerPkXml string
+	IssuerNonce *big.Int
+	HolderSk    *big.Int
+}
+
+// TODO: Handle state properly
+var dirtyHack *gabi.CredentialBuilder
+
+func CreateCommitmentMessage(holderSkJson, issuerPkXml, issuerNonceJson []byte) ([]byte, string) {
+	var holderSk *big.Int
+	err := json.Unmarshal(holderSkJson, holderSk)
 	if err != nil {
-		panic("Could not unmarshal CreateCommitmentsMessage")
+		return nil, errors.WrapPrefix(err, "Could not unmarshal holder sk", 0).Error()
 	}
 
-	icm, err := holder.CreateCommitment(cmmMsg)
+	issuerPk, err := gabi.NewPublicKeyFromXML(string(issuerPkXml))
 	if err != nil {
-		panic("Could not create commitment")
+		return nil, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0).Error()
 	}
+
+	var issuerNonce *big.Int
+	err = json.Unmarshal(issuerNonceJson, issuerNonce)
+	if err != nil {
+		return nil, errors.WrapPrefix(err, "Could not unmarshal issuer nonce", 0).Error()
+	}
+
+	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
+	dirtyHack = credBuilder // FIXME
 
 	icmJson, err := json.Marshal(icm)
 	if err != nil {
-		panic("Could not serialize IssueCommitmentMessage")
+		panic("Could not marshal IssueCommitmentMessage")
 	}
 
-	return icmJson
+	return icmJson, ""
 }
 
-func CreateCredential(credMsgJson []byte) []byte {
-	credMsg := &holder.CreateCredentialMessage{}
-	err := json.Unmarshal(credMsgJson, credMsg)
+type CreateCredentialMessage struct {
+	IssueSignatureMessage *gabi.IssueSignatureMessage
+	AttributeValues       []string
+}
+
+func CreateCredential(holderSkJson, ccmJson []byte) ([]byte, string) {
+	var holderSk *big.Int
+	err := json.Unmarshal(holderSkJson, holderSk)
 	if err != nil {
-		panic("Could not unmarshal CreateCredentialMessage")
+		return nil, errors.WrapPrefix(err, "Could not unmarshal holder sk", 0).Error()
 	}
 
-	cred, err := holder.CreateCredential(credMsg)
+	ccm := &CreateCredentialMessage{}
+	err = json.Unmarshal(ccmJson, ccm)
 	if err != nil {
-		panic("Could not create credential")
+		return nil, errors.WrapPrefix(err, "Could not unmarshal CreateCredentialMessage", 0).Error()
+	}
+
+	credBuilder := dirtyHack // FIXME
+
+	cred, err := holder.CreateCredential(credBuilder, ccm.IssueSignatureMessage, ccm.AttributeValues)
+	if err != nil {
+		return nil, errors.WrapPrefix(err, "Could not create credential", 0).Error()
 	}
 
 	credJson, err := json.Marshal(cred)
 	if err != nil {
-		panic("Could not serialize credential")
+		return nil, errors.WrapPrefix(err, "Could not marshal credential", 0).Error()
 	}
 
-	return credJson
+	return credJson, ""
 }
 
-func DiscloseAll() {
+func DiscloseAllWithTime(credJson []byte) ([]byte, string) {
+	var cred *gabi.Credential
+	err := json.Unmarshal(credJson, cred)
+	if err != nil {
+		return nil, errors.WrapPrefix(err, "Could not unmarshal credential", 0).Error()
+	}
 
+	proofAsn1, err := holder.DiscloseAllWithTime(cred)
+	if err != nil {
+		return nil, errors.WrapPrefix(err, "Could not create proof", 0).Error()
+	}
+
+	return proofAsn1, ""
 }

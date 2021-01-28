@@ -2,42 +2,35 @@ package main
 
 import (
 	"fmt"
+	"github.com/privacybydesign/gabi"
 	"gitlab.com/confiks/ctcl/holder"
 	"gitlab.com/confiks/ctcl/issuer"
 	"gitlab.com/confiks/ctcl/verifier"
 )
 
 func main() {
-	holderSkMessage := holder.GenerateHolderSk()
+	issuerPk, _ := gabi.NewPublicKeyFromXML(issuerPkXml)
+	holderSk := holder.GenerateHolderSk()
 
 	issuerNonce := issuer.GenerateIssuerNonce()
-
-	cmmMsg := &holder.CreateCommitmentsMessage{
-		IssuerPkXml: issuerPkXml,
-		IssuerNonce: issuerNonce,
-		HolderSk: holderSkMessage.Key,
-	}
-	icm, _ := holder.CreateCommitment(cmmMsg)
+	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
 	attributeValues := []string{"foo", "bar"}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
-	credMsg := &holder.CreateCredentialMessage{
-		HolderSk: holderSkMessage.Key,
-		IssueSignatureMessage: ism,
-		AttributeValues: attributeValues,
+	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
+	if err != nil {
+		panic(err.Error())
 	}
-	cred, _ := holder.CreateCredential(credMsg)
 
-	proofAsn1, _ := holder.DiscloseAll(cred)
+	proofAsn1, err := holder.DiscloseAllWithTime(cred)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
 
-	verifyMessage := &verifier.VerifyMessage{
-		IssuerPkXml: issuerPkXml,
-		ProofAsn1: proofAsn1,
-	}
-
-	verifiedValues, unixTimeSeconds, err := verifier.Verify(verifyMessage)
+	verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
 	if err != nil {
 		fmt.Println("Invalid proof")
 	} else {

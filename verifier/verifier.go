@@ -8,21 +8,7 @@ import (
 	"gitlab.com/confiks/ctcl/common"
 )
 
-type VerifyMessage struct {
-	IssuerPkXml string
-	ProofAsn1   []byte
-}
-
-func Verify(verifyMessage *VerifyMessage) (map[string]*string, int64, error) {
-	issuerPk, err := gabi.NewPublicKeyFromXML(verifyMessage.IssuerPkXml)
-	if err != nil {
-		panic("Could not unmarshal issuer public key: " + err.Error())
-	}
-
-	return verify(issuerPk, verifyMessage.ProofAsn1)
-}
-
-func verify(issuerPk *gabi.PublicKey, proofAsn1 []byte) (map[string]*string, int64, error) {
+func Verify(issuerPk *gabi.PublicKey, proofAsn1 []byte) (map[string]*string, int64, error) {
 	// Deserialize proof
 	ps := &common.ProofSerialization{}
 	_, err := asn1.Unmarshal(proofAsn1, ps)
@@ -91,9 +77,9 @@ func verify(issuerPk *gabi.PublicKey, proofAsn1 []byte) (map[string]*string, int
 	for disclosureIndex, dd := range aDisclosed {
 		d := new(big.Int).Set(dd)
 
-		// Optional attribute
 		var value *string
 		if d.Bit(0) == 0 {
+			// Optional attribute
 			value = nil
 		} else {
 			d.Rsh(d, 1)
