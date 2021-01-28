@@ -1,0 +1,10 @@
+image:
+  name: cmptr/android_golang_gomobile:latest
+
+build:
+  artifacts:
+    paths:
+      - ctcl.aar
+  script:
+    - gomobile bind -target android -o ctcl.aar gitlab.com/confiks/ctcl/holder/jsoninterface
+  
