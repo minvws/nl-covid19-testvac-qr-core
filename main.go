@@ -41,10 +41,6 @@ func main() {
 		}
 	}
 
-	r1 := clmobile.OkTest()
-	fmt.Println(r1.Value)
-
-	r2 := clmobile.ErrorTest()
-	fmt.Println(r2.Error)
+	_ = clmobile.GenerateHolderSk()
 }
 
