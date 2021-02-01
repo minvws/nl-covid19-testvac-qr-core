@@ -70,9 +70,6 @@ func testIssuerHolderVerifier() {
 				fmt.Printf("%d: %s\n", k, v)
 			}
 		}
-
-		testClmobile()
-		testExampleISM()
 	}
 }
 
