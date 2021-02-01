@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/privacybydesign/gabi"
+	"gitlab.com/confiks/ctcl/clmobile"
 	"gitlab.com/confiks/ctcl/holder"
 	"gitlab.com/confiks/ctcl/issuer"
 	"gitlab.com/confiks/ctcl/verifier"
@@ -39,5 +40,11 @@ func main() {
 			fmt.Printf("%s: %s\n", k, *v)
 		}
 	}
+
+	r1 := clmobile.OkTest()
+	fmt.Println(r1.Value)
+
+	r2 := clmobile.ErrorTest()
+	fmt.Println(r2.Error)
 }
 
