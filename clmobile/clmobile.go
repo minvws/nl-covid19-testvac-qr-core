@@ -5,7 +5,7 @@ import (
 	//"github.com/go-errors/errors"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"gitlab.com/confiks/ctcl/holder"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
 )
 
 type Result struct {

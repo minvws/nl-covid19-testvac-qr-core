@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"gitlab.com/confiks/ctcl/common"
-	"gitlab.com/confiks/ctcl/issuer"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
 )
 
 // export GetIssuingNonce

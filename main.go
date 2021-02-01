@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/privacybydesign/gabi"
-	"gitlab.com/confiks/ctcl/clmobile"
-	"gitlab.com/confiks/ctcl/holder"
-	"gitlab.com/confiks/ctcl/issuer"
-	"gitlab.com/confiks/ctcl/verifier"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/clmobile"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 )
 
 func main() {

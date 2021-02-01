@@ -5,7 +5,7 @@ import "C"
 import (
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"gitlab.com/confiks/ctcl/common"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
 )
 
 type IssuanceSession struct {

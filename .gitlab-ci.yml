@@ -6,5 +6,5 @@ build:
     paths:
       - ctcl.aar
   script:
-    - gomobile bind -target android -o ctcl.aar gitlab.com/confiks/ctcl/holder/jsoninterface
+    - gomobile bind -target android -o ctcl.aar github.com/minvws/nl-covid19-coronatester-ctcl-core/holder/jsoninterface
   
