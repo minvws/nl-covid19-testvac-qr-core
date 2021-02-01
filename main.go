@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/clmobile"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
@@ -15,8 +16,8 @@ import (
 func main() {
 	// TODO: Move these test to proper tests
 	testIssuerHolderVerifier()
-	testClmobile()
-	testExampleISM()
+	// testClmobile()
+	// testExampleISM()
 }
 
 func testIssuerHolderVerifier() {
@@ -31,7 +32,12 @@ func testIssuerHolderVerifier() {
 	issuerNonce := issuer.GenerateIssuerNonce()
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
-	attributeValues := [][]byte{[]byte("foo"), []byte("bar")}
+	fhir, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.bin")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	attributeValues := [][]byte{[]byte("foo"), []byte("bar"), fhir}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
@@ -67,7 +73,7 @@ func testIssuerHolderVerifier() {
 		} else {
 			fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
 			for k, v := range verifiedValues {
-				fmt.Printf("%d: %s\n", k, v)
+				fmt.Printf("%d: %v\n", k, v)
 			}
 		}
 	}

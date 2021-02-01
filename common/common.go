@@ -5,17 +5,18 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	gobig "math/big"
+	"strconv"
+
 	"github.com/go-errors/errors"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	gobig "math/big"
-	"strconv"
 )
 
 var BigOne = big.NewInt(1)
 var GabiSystemParameters = gabi.DefaultSystemParameters[2048]
 
-var AttributeTypes = []string{"testType", "testedAt"}
+var AttributeTypes = []string{"testType", "testedAt", "FHIR"}
 
 type ProofSerialization struct {
 	UnixTimeSeconds   int64
