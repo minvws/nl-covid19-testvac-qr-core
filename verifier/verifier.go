@@ -3,12 +3,12 @@ package verifier
 import (
 	"encoding/asn1"
 	"github.com/go-errors/errors"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
 )
 
-func Verify(issuerPk *gabi.PublicKey, proofAsn1 []byte) (map[string]*string, int64, error) {
+func Verify(issuerPk *gabi.PublicKey, proofAsn1 []byte) ([]string, int64, error) {
 	// Deserialize proof
 	ps := &common.ProofSerialization{}
 	_, err := asn1.Unmarshal(proofAsn1, ps)
@@ -73,22 +73,20 @@ func Verify(issuerPk *gabi.PublicKey, proofAsn1 []byte) (map[string]*string, int
 	}
 
 	// Retrieve attribute values
-	values := map[string]*string{}
+	values := make([]string, len(common.AttributeTypes))
 	for disclosureIndex, dd := range aDisclosed {
 		d := new(big.Int).Set(dd)
 
-		var value *string
+		var value string
 		if d.Bit(0) == 0 {
-			// Optional attribute
-			value = nil
+			// TODO: Decide if and how to support optional attributes
+			value = ""
 		} else {
 			d.Rsh(d, 1)
-			str := string(d.Bytes())
-			value = &str
+			value = string(d.Bytes())
 		}
 
-		attributeType := common.AttributeTypes[disclosureIndex-1]
-		values[attributeType] = value
+		values[disclosureIndex - 1] = value
 	}
 
 	return values, ps.UnixTimeSeconds, nil

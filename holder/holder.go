@@ -3,9 +3,9 @@ package holder
 import (
 	"encoding/asn1"
 	"github.com/go-errors/errors"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
-	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
 	"time"
 )
 

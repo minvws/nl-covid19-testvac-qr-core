@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/go-errors/errors"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
+	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 )
@@ -87,12 +88,19 @@ func CreateCredential(holderSkJson, ccmJson []byte) *Result {
 	return &Result{credJson, ""}
 }
 
-func DiscloseAllWithTime(credJson []byte) *Result {
-	var cred *gabi.Credential
-	err := json.Unmarshal(credJson, cred)
+func DiscloseAllWithTime(issuerPkXml, credJson []byte) *Result {
+	issuerPk, err := gabi.NewPublicKeyFromXML(string(issuerPkXml))
+	if err != nil {
+		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0).Error()}
+	}
+
+	cred := new(gabi.Credential)
+	err = json.Unmarshal(credJson, cred)
 	if err != nil {
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal credential", 0).Error()}
 	}
+
+	cred.Pk = issuerPk
 
 	proofAsn1, err := holder.DiscloseAllWithTime(cred)
 	if err != nil {
@@ -100,6 +108,26 @@ func DiscloseAllWithTime(credJson []byte) *Result {
 	}
 
 	return &Result{proofAsn1, ""}
+}
+
+type VerifyResult struct {
+	AttributeValues []string
+	UnixTimeSeconds int64
+	Error string
+}
+
+func Verify(issuerPkXml, proofAsn1 []byte) *VerifyResult {
+	issuerPk, err := gabi.NewPublicKeyFromXML(string(issuerPkXml))
+	if err != nil {
+		return &VerifyResult{nil, 0, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0).Error()}
+	}
+
+	attributeValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
+	if err != nil {
+		return &VerifyResult{nil, 0, errors.WrapPrefix(err, "Could not verify proof", 0).Error()}
+	}
+
+	return &VerifyResult{attributeValues, unixTimeSeconds, ""}
 }
 
 func base64DecodeBigInt(b64 []byte) (*big.Int, error) {
