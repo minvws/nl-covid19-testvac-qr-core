@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/clmobile"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
@@ -12,7 +14,10 @@ import (
 
 func main() {
 	issuerPk, _ := gabi.NewPublicKeyFromXML(issuerPkXml)
+	fmt.Printf("Issuer is: %v \n", issuerPk.Issuer)
+
 	holderSk := holder.GenerateHolderSk()
+	fmt.Printf("Holder is: %v \n", holderSk.String())
 
 	issuerNonce := issuer.GenerateIssuerNonce()
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
@@ -25,25 +30,41 @@ func main() {
 		panic(err.Error())
 	}
 
-	proofAsn1, err := holder.DiscloseAllWithTime(cred)
-	if err != nil {
-		panic(err.Error())
-	}
+	count := 5
+	for i := 0; i < count; i++ {
+		fmt.Printf("An Encounter happens!\n")
+		fmt.Printf("Citizen generate a QR code and holds it up.\n")
 
-	fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
-
-	verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
-	if err != nil {
-		fmt.Println("Invalid proof")
-	} else {
-		fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
-		for k, v := range verifiedValues {
-			fmt.Printf("%s: %s\n", k, *v)
+		proofAsn1, err := holder.DiscloseAllWithTime(cred)
+		if err != nil {
+			panic(err.Error())
 		}
-	}
 
-	testClmobile()
-	testExampleISM()
+		qr := sha256.New()
+		qr.Write(proofAsn1)
+
+		// err1 := ioutil.WriteFile("qr.bin", proofAsn1, 0644)
+		// if err1 != nil {
+		// 	panic(err)
+		// }
+
+		fmt.Printf("Sha256 of the qr code is: %x\n", qr.Sum(nil))
+
+		fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
+
+		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
+		if err != nil {
+			fmt.Println("Invalid proof")
+		} else {
+			fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
+			for k, v := range verifiedValues {
+				fmt.Printf("%s: %s\n", k, *v)
+			}
+		}
+
+		testClmobile()
+		testExampleISM()
+	}
 }
 
 func testClmobile() {
@@ -71,7 +92,7 @@ func testClmobile() {
 
 	ccm := &clmobile.CreateCredentialMessage{
 		IssueSignatureMessage: ism,
-		AttributeValues: attributeValues,
+		AttributeValues:       attributeValues,
 	}
 	ccmJson, _ := json.Marshal(ccm)
 
