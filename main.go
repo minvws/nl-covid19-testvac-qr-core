@@ -11,6 +11,15 @@ import (
 )
 
 func main() {
+	// TODO: Move these test to proper tests
+	testIssuerHolderVerifier()
+	testClmobile()
+	testExampleISM()
+}
+
+func testIssuerHolderVerifier() {
+	fmt.Println("Testing issuer/holder/verifier packages:")
+
 	issuerPk, _ := gabi.NewPublicKeyFromXML(issuerPkXml)
 	holderSk := holder.GenerateHolderSk()
 
@@ -38,15 +47,14 @@ func main() {
 	} else {
 		fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
 		for k, v := range verifiedValues {
-			fmt.Printf("%s: %s\n", k, *v)
+			fmt.Printf("%d: %s\n", k, v)
 		}
 	}
-
-	testClmobile()
-	testExampleISM()
 }
 
 func testClmobile() {
+	fmt.Println("\nClmobile test:")
+
 	r1 := clmobile.GenerateHolderSk()
 	if r1.Error != "" {
 		panic("Error in GenerateHolderSk: " + r1.Error)
@@ -77,7 +85,22 @@ func testClmobile() {
 
 	r3 := clmobile.CreateCredential(r1.Value, ccmJson)
 	if r3.Error != "" {
-		panic("Error creating credential")
+		panic("Error creating credential:" + r3.Error)
+	}
+
+	r4 := clmobile.DiscloseAllWithTime([]byte(issuerPkXml), r3.Value)
+	if r4.Error != "" {
+		panic("Error disclosing credential: " + r4.Error)
+	}
+
+	r5 := clmobile.Verify([]byte(issuerPkXml), r4.Value)
+	if r5.Error != "" {
+		panic("Error verifying credential: " + r5.Error)
+	}
+
+	fmt.Printf("Valid proof for time %d:\n", r5.UnixTimeSeconds)
+	for k, v := range r5.AttributeValues {
+		fmt.Printf("%d: %s\n", k, v)
 	}
 }
 
