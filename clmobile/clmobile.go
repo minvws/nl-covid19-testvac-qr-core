@@ -22,17 +22,11 @@ func GenerateHolderSk() *Result {
 	return &Result{holderSkJson, ""}
 }
 
-type CreateCommitmentsMessage struct {
-	IssuerPkXml string
-	IssuerNonce *big.Int
-	HolderSk    *big.Int
-}
-
 // TODO: Handle state properly
 var dirtyHack *gabi.CredentialBuilder
 
 func CreateCommitmentMessage(holderSkJson, issuerPkXml, issuerNonceJson []byte) *Result {
-	var holderSk *big.Int
+	holderSk := new(big.Int)
 	err := json.Unmarshal(holderSkJson, holderSk)
 	if err != nil {
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal holder sk", 0).Error()}
@@ -43,7 +37,7 @@ func CreateCommitmentMessage(holderSkJson, issuerPkXml, issuerNonceJson []byte) 
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0).Error()}
 	}
 
-	var issuerNonce *big.Int
+	issuerNonce := new(big.Int)
 	err = json.Unmarshal(issuerNonceJson, issuerNonce)
 	if err != nil {
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal issuer nonce", 0).Error()}
@@ -66,7 +60,7 @@ type CreateCredentialMessage struct {
 }
 
 func CreateCredential(holderSkJson, ccmJson []byte) *Result {
-	var holderSk *big.Int
+	holderSk := new(big.Int)
 	err := json.Unmarshal(holderSkJson, holderSk)
 	if err != nil {
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal holder sk", 0).Error()}
