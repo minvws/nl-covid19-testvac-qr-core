@@ -31,7 +31,7 @@ func testIssuerHolderVerifier() {
 	issuerNonce := issuer.GenerateIssuerNonce()
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
-	attributeValues := []string{"foo", "bar"}
+	attributeValues := [][]byte{[]byte("foo"), []byte("bar")}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
@@ -95,7 +95,7 @@ func testClmobile() {
 		panic("Error serializing ICM")
 	}
 
-	attributeValues := []string{"foo", "bar"}
+	attributeValues := [][]byte{[]byte("foo"), []byte("bar")}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	ccm := &clmobile.CreateCredentialMessage{

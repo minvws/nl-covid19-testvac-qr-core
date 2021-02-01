@@ -45,7 +45,7 @@ func GenerateNonce() *big.Int {
 	return RandomBigInt(GabiSystemParameters.Lstatzk)
 }
 
-func ComputeAttributes(attributeValues []string) ([]*big.Int, error) {
+func ComputeAttributes(attributeValues [][]byte) ([]*big.Int, error) {
 	if len(AttributeTypes) != len(attributeValues) {
 		return nil, errors.New("Amount of attribute values don't match amount of attribute types")
 	}
@@ -54,7 +54,7 @@ func ComputeAttributes(attributeValues []string) ([]*big.Int, error) {
 	attrs := make([]*big.Int, len(attributeValues))
 	for i, val := range attributeValues {
 		attrs[i] = new(big.Int)
-		attrs[i].SetBytes([]byte(val))
+		attrs[i].SetBytes(val)
 
 		// Let the last bit distinguish empty vs. optional attributes
 		attrs[i].Lsh(attrs[i], 1)             // attr <<= 1
