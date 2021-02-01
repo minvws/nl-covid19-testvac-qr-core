@@ -1,6 +1,7 @@
 package clmobile
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/go-errors/errors"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
@@ -25,7 +26,7 @@ func GenerateHolderSk() *Result {
 // TODO: Handle state properly
 var dirtyHack *gabi.CredentialBuilder
 
-func CreateCommitmentMessage(holderSkJson, issuerPkXml, issuerNonceJson []byte) *Result {
+func CreateCommitmentMessage(holderSkJson, issuerPkXml, issuerNonceBase64 []byte) *Result {
 	holderSk := new(big.Int)
 	err := json.Unmarshal(holderSkJson, holderSk)
 	if err != nil {
@@ -37,8 +38,7 @@ func CreateCommitmentMessage(holderSkJson, issuerPkXml, issuerNonceJson []byte) 
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal issuer public key", 0).Error()}
 	}
 
-	issuerNonce := new(big.Int)
-	err = json.Unmarshal(issuerNonceJson, issuerNonce)
+	issuerNonce, err := base64DecodeBigInt(issuerNonceBase64)
 	if err != nil {
 		return &Result{nil, errors.WrapPrefix(err, "Could not unmarshal issuer nonce", 0).Error()}
 	}
@@ -100,4 +100,17 @@ func DiscloseAllWithTime(credJson []byte) *Result {
 	}
 
 	return &Result{proofAsn1, ""}
+}
+
+func base64DecodeBigInt(b64 []byte) (*big.Int, error) {
+	bts := make([]byte, base64.StdEncoding.DecodedLen(len(b64)))
+	n, err := base64.StdEncoding.Decode(bts, b64)
+	if err != nil {
+		return nil, errors.WrapPrefix(err, "Could not decode bigint", 0)
+	}
+
+	i := new(big.Int)
+	i.SetBytes(bts[0:n])
+
+	return i, nil
 }

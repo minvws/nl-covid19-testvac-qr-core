@@ -53,9 +53,9 @@ func testClmobile() {
 	}
 
 	issuerNonce := issuer.GenerateIssuerNonce()
-	issuerNonceJson, _ := json.Marshal(issuerNonce)
+	issuerNonceBase64, _ := issuerNonce.MarshalText()
 
-	r2 := clmobile.CreateCommitmentMessage(r1.Value, []byte(issuerPkXml), issuerNonceJson)
+	r2 := clmobile.CreateCommitmentMessage(r1.Value, []byte(issuerPkXml), issuerNonceBase64)
 	if r2.Error != "" {
 		panic("Error in CreateCommitmentMessage: " + r2.Error)
 	}
