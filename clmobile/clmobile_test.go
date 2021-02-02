@@ -28,7 +28,7 @@ func TestFlow(t *testing.T) {
 		panic("Error serializing ICM")
 	}
 
-	attributeValues := [][]byte{[]byte("foo"), []byte("bar"), []byte("foobar")}
+	attributeValues := [][]byte{[]byte("foo"), []byte("bar")}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	ccm := &CreateCredentialMessage{
