@@ -13,7 +13,7 @@ The cryptographical technologies are based on Zero Knowlege Proof in general, an
 
 ## Context
 
-This PoC is part of a wider piece of work to map, asssess and curtail the privacy and security risks associated with the use cases for a citizen being able to prove vaccination or the veracity of a negative test result. This is driven by the anticipated need for a COVID-19 proof of vaccination requirement both internationally. Note that there is currently no national requirement for such proof.
+This PoC is part of a wider piece of work to map, asssess and curtail the privacy and security risks associated with the use cases for a citizen being able to prove vaccination or the veracity of a negative test result. This is driven by the anticipated need for a COVID-19 proof of vaccination requirement internationally. Note that there is currently no national requirement for such proof.
 
 In particular, the risks and mitigations are explored for both paper-based and digital versions of possible implementations for a proof of vaccination or negative test.
 
