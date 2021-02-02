@@ -1,8 +1,29 @@
 # CoronaTester CTCL
 
-This is a proof of concept for creating a qr code system for proving that one has had a vaccination record(FHIR). 
+This is a proof of concept (PoC) for creating a qr code system for proving that one has had a valid negative test result or a vaccination record(FHIR). 
 
-#### Description
+Key features to demonstrate are
+
+1. Show that it is possible to sign or otherwise make values shown (such as I was tested negative on thursday) somewhat tamper resistent.
+1. Data minimisation - show that it is possible to selectively disclose only certain fields (depending on context) -- whilst keeping things such as digital signatures intact.
+1. Unlinkability - make it impossible (or hard) to use the data shared to track a holder (citizen) (e.g. by the verifier simply recording all signatures shown, or by the issuering hearing of validations).
+1. Show that this can by largely done off-line; not requiring a connection by the holder.
+
+The cryptographical technologies are based on Zero Knowlege Proof in general, and those of Identiy Mixer (and IRMA.app in particular).
+
+## Context
+
+This PoC is part of a wider piece of work to map, asssess and curtail the privacy and security risks associated with the use cases for a citizen being able to prove vaccination or the veracity of a negative test result. This is driven by the anticipated need for a COVID-19 proof of vaccination requirement both internationally. Note that there is currently no national requirement for such proof.
+
+In particular, the risks and mitigations are explored for both paper-based and digital versions of possible implementations for a proof of vaccination or negative test.
+
+This document explores the realm of possible technical implementation options and the social and legal requirements that constrain which of the technical implementations may be chosen. As such, this interplay defines the envelope within which realistic solutions are likely to fit.
+
+## Description
+
+
+
+## Description
 The aim for this project is to be able to show the whole process of how the proposed system might work. There are three main individuals: issuer, holder, and verifier. 
 - The issuer is a medical institute that has provided the vaccine and has been certificated by a ministry to hand out vaccination certificates.    
 - The holder is an individual who has been vaccinated. 
