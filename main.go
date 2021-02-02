@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 
@@ -32,7 +33,7 @@ func showFHIRExample() {
 		fmt.Println(err)
 	}
 
-	attributeValues := [][]byte{[]byte("foo"), []byte("bar"), fhir}
+	attributeValues := [][]byte{fhir, []byte("f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b")}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
@@ -42,7 +43,8 @@ func showFHIRExample() {
 
 	count := 5
 	for i := 0; i < count; i++ {
-		fmt.Printf("\n---\n\nAn Encounter happens!\n")
+		fmt.Printf("\n\n")
+		fmt.Printf("An Encounter happens!\n")
 		fmt.Printf("Citizen generate a QR code and holds it up.\n")
 
 		proofAsn1, err := holder.DiscloseAllWithTime(cred)
@@ -62,14 +64,20 @@ func showFHIRExample() {
 
 		fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
 
+		fmt.Printf("\n")
+
+		fmt.Printf("Varifier Scans the QR code to check proof!\n")
+
 		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
 		if err != nil {
 			fmt.Println("Invalid proof")
 		} else {
 			fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
-			for k, v := range verifiedValues {
-				fmt.Printf("%d: %v\n", k, v)
-			}
+			rec := sha256.New()
+			rec.Write([]byte(verifiedValues[0]))
+			fmt.Printf("FHIR Record Hash: %v\n", hex.EncodeToString(rec.Sum(nil)))
+			fmt.Printf("FHIR Stored Hash : %v\n", verifiedValues[1])
+
 		}
 	}
 }
