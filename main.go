@@ -60,7 +60,7 @@ func showFHIRExample() {
 		// 	panic(err)
 		// }
 
-		fmt.Printf("Sha256 of the qr code is: %x\n", qr.Sum(nil))
+		fmt.Printf("Sha256 of the QR code is: %x\n", qr.Sum(nil))
 
 		fmt.Printf("Got proof size of %d bytes\n", len(proofAsn1))
 
