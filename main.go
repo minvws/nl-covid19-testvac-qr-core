@@ -66,7 +66,7 @@ func showFHIRExample() {
 
 		fmt.Printf("\n")
 
-		fmt.Printf("Varifier Scans the QR code to check proof!\n")
+		fmt.Printf("Verifier Scans the QR code to check proof!\n")
 
 		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
 		if err != nil {
@@ -75,7 +75,7 @@ func showFHIRExample() {
 			fmt.Printf("Valid proof for time %d:\n", unixTimeSeconds)
 			rec := sha256.New()
 			rec.Write([]byte(verifiedValues[0]))
-			fmt.Printf("FHIR Record Hash: %v\n", hex.EncodeToString(rec.Sum(nil)))
+			fmt.Printf("FHIR Record Hash : %v\n", hex.EncodeToString(rec.Sum(nil)))
 			fmt.Printf("FHIR Stored Hash : %v\n", verifiedValues[1])
 
 		}

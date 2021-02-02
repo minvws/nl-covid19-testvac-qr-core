@@ -47,7 +47,7 @@ Citizen generate a QR code and holds it up.
 Sha256 of the qr code is: 55baa7f5b66b0e2df0cc6fd01da15552c89d6677ae4efde7bec870ea6f441525
 Got proof size of 1037 bytes
 
-Varifier Scans the QR code to check proof!
+Verifier Scans the QR code to check proof!
 Valid proof for time 1612271987:
 FHIR Record Hash: f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
 FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
@@ -58,7 +58,7 @@ Citizen generate a QR code and holds it up.
 Sha256 of the qr code is: fc8a51a56a6498dce64f764dfeb4481d49f3e08b7ac413d292c06db1dbfb1838
 Got proof size of 1040 bytes
 
-Varifier Scans the QR code to check proof!
+Verifier Scans the QR code to check proof!
 Valid proof for time 1612271987:
 FHIR Record Hash: f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
 FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
@@ -69,7 +69,7 @@ Citizen generate a QR code and holds it up.
 Sha256 of the qr code is: 950dedfc067266f93c77b04b646de966c165b1973ce1b3f3bb9286f84309e681
 Got proof size of 1039 bytes
 
-Varifier Scans the QR code to check proof!
+Verifier Scans the QR code to check proof!
 Valid proof for time 1612271987:
 FHIR Record Hash: f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
 FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
@@ -80,7 +80,7 @@ Citizen generate a QR code and holds it up.
 Sha256 of the qr code is: 01ee3b2b2524fdbf5a2714a3e1362f743984f714851398c431e6896d0b41e1be
 Got proof size of 1038 bytes
 
-Varifier Scans the QR code to check proof!
+Verifier Scans the QR code to check proof!
 Valid proof for time 1612271987:
 FHIR Record Hash: f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
 FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
@@ -91,7 +91,7 @@ Citizen generate a QR code and holds it up.
 Sha256 of the qr code is: 3ba04f3bcec8504f94f6cb8cb6124222c0d462ed407d208b5cbb52f0355e4049
 Got proof size of 1038 bytes
 
-Varifier Scans the QR code to check proof!
+Verifier Scans the QR code to check proof!
 Valid proof for time 1612271987:
 FHIR Record Hash: f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
 FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
