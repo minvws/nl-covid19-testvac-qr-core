@@ -4,6 +4,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+        gobig "math/big"
 	"fmt"
 	"io/ioutil"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
+        qrcode "github.com/skip2/go-qrcode"
 )
 // SHA256(example-fhir-nl.bin)= 67409d726c4213eabe52bd6ac5a8c4624f601c0421541facb6ee49ebb0d867a4
 const fileFhir = "example-fhir-nl.bin"
@@ -20,6 +22,21 @@ const fileFhir = "example-fhir-nl.bin"
 
 func main() {
 	showFHIRExample()
+}
+
+var qrCharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
+var qrCharsetLen = gobig.NewInt(45)
+
+func qrEncode(input []byte) []byte {
+   estOutputLen := int(float64(len(input)) * 1.4568) + 1
+   output := make([]byte, 0, estOutputLen)
+   divident, remainder := new(gobig.Int), new(gobig.Int)
+   divident.SetBytes(input)
+   for len(divident.Bits()) != 0 {
+       divident, remainder = divident.QuoRem(divident, qrCharsetLen, remainder)
+       output = append(output, qrCharset[remainder.Int64()])
+   }
+   return output
 }
 
 func showFHIRExample() {
@@ -80,6 +97,11 @@ func showFHIRExample() {
 		if err != nil {
 			panic(err.Error())
 		}
+                proofAsn1string := string(qrEncode(proofAsn1))
+                err2 := qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr.png")
+		if err2 != nil {
+			panic(err.Error())
+		}
 
 		qr := sha256.New()
 		qr.Write(proofAsn1)
@@ -89,9 +111,9 @@ func showFHIRExample() {
 		// 	panic(err)
 		// }
 
-		fmt.Printf("       Sha256 of the QR code is: %x\n", qr.Sum(nil))
+		fmt.Printf("       The QR code contains: %v.... (5.5bit encoded)\n", proofAsn1string[:30])
 
-		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the Qr code)\n", len(proofAsn1))
+		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the Qr code in bytes)\n", len(proofAsn1))
 
 		fmt.Printf("\n")
 
