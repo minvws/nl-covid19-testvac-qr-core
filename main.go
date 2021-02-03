@@ -1,5 +1,6 @@
 package main
 
+
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,6 +12,11 @@ import (
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
 )
+// SHA256(example-fhir-nl.bin)= 67409d726c4213eabe52bd6ac5a8c4624f601c0421541facb6ee49ebb0d867a4
+const fileFhir = "example-fhir-nl.bin"
+
+// SHA256(example-fhir-cz.bin)= f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
+const fileFhir = "example-fhir-cz.bin"
 
 func main() {
 	showFHIRExample()
@@ -37,13 +43,22 @@ func showFHIRExample() {
 	issuerNonce := issuer.GenerateIssuerNonce()
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
-	fhir, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.bin")
+	fmt.Printf("   reading in the FHIR record (%v)\n", fileFhir)
+	fhir, err := ioutil.ReadFile(fileFhir)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("    read in %d of FHIR record\n",len(fhir))
 
-	attributeValues := [][]byte{fhir, []byte("f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b")}
+	rec := sha256.New()
+	rec.Write([]byte(fhir))
+        crc := rec.Sum(nil)
+	crcHex := hex.EncodeToString(crc)
+
+	fmt.Printf("    read in %d bytes of FHIR record\n",len(fhir))
+	fmt.Printf("    FHIR record checksum: %v", crcHex)
+
+        // attributeValues := [][]byte{fhir, []byte(crcHex)}
+        attributeValues := [][]byte{fhir, []byte(crc)}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
@@ -83,16 +98,25 @@ func showFHIRExample() {
 		fmt.Printf("      Verifier Scans the QR code to check proof against %v (public key of the issuer)\n", issuerPk.Issuer)
 
 		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
-		if err != nil {
-			fmt.Println("Invalid proof")
-		} else {
-			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
-			rec := sha256.New()
-			rec.Write([]byte(verifiedValues[0]))
-			fmt.Printf("       FHIR Record Hash : %v\n", hex.EncodeToString(rec.Sum(nil)))
-			fmt.Printf("       FHIR Stored Hash : %v\n", verifiedValues[1])
-			fmt.Printf("      so this record was not tamped with.\n")
 
+		rec := sha256.New()
+		rec.Write([]byte(verifiedValues[0]))
+		crc = rec.Sum(nil)
+		crcHex = hex.EncodeToString(crc)
+
+		val := []byte(verifiedValues[1])
+		valHex := hex.EncodeToString(val)
+
+		fmt.Printf("       FHIR Record Hash : %v\n", crcHex)
+                fmt.Printf("       FHIR Stored Hash : %v\n", valHex)
+
+		if err != nil {
+			panic("Invalid proof")
 		}
+		if crcHex != valHex {
+			panic("Valid proof, but crc mismatch")
+		}
+
+		fmt.Printf("      Valid proof for time %d:\n", unixTimeSeconds)
 	}
 }
