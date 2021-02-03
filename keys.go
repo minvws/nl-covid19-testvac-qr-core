@@ -30,6 +30,7 @@ var issuerPkXml = `
 </IssuerPublicKey>
 `
 
+// This private key is present in this repository for demo purposes
 var issuerSkXml = `
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <IssuerPrivateKey xmlns="http://www.zurich.ibm.com/security/idemix">

@@ -26,7 +26,7 @@ The aim for this project is to be able to show the whole process of how the prop
 - The holder is an individual who has been vaccinated or negatively tested. 
 - The verifier is an individual or organization who would like to verify that the holder has been vaccinated or negatively tested.
 
-There is already a standard medical message for immunization in HL7 (both v3 CDA and FHIR) which can be re-used also for COVID-19 purposes. We use the work that was done in [nl-eHealth-experimental](https://github.com/minvws/nl-eHealth-experimental/tree/master/examples/smartvacc) repository to produce a FHIR record that has been encoded as a protobuf. We use a subset of the FHIR record that is in the draft version of the WHO requirements.
+There is already a standard medical message for immunization in HL7 (both v3 CDA and FHIR) which can be re-used also for COVID-19 purposes. We use the work that was done in [nl-eHealth-experimental](https://github.com/minvws/nl-eHealth-experimental/tree/master/examples/smartvac) repository to produce a FHIR record that has been encoded as a protobuf. We use a subset of the FHIR record that is in the draft version of the WHO requirements.
 
 The records are signed with a Camenisch-Lysyanskaya signature, which allows the proof to be presented in an unlinkable way by means of a Zero Knowledge Proof.
 
