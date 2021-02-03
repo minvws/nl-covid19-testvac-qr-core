@@ -16,7 +16,7 @@ import (
 const fileFhir = "example-fhir-nl.bin"
 
 // SHA256(example-fhir-cz.bin)= f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-const fileFhir = "example-fhir-cz.bin"
+// const fileFhir = "example-fhir-cz.bin"
 
 func main() {
 	showFHIRExample()
