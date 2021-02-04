@@ -3,7 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
-        gobig "math/big"
+	gobig "math/big"
 	"fmt"
 	"io/ioutil"
 
@@ -11,7 +11,7 @@ import (
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
-        qrcode "github.com/skip2/go-qrcode"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 // SHA256(example-fhir-nl.bin)= 67409d726c4213eabe52bd6ac5a8c4624f601c0421541facb6ee49ebb0d867a4
@@ -28,15 +28,18 @@ var qrCharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
 var qrCharsetLen = gobig.NewInt(45)
 
 func qrEncode(input []byte) []byte {
-   estOutputLen := int(float64(len(input)) * 1.4568) + 1
-   output := make([]byte, 0, estOutputLen)
-   divident, remainder := new(gobig.Int), new(gobig.Int)
-   divident.SetBytes(input)
-   for len(divident.Bits()) != 0 {
-       divident, remainder = divident.QuoRem(divident, qrCharsetLen, remainder)
-       output = append(output, qrCharset[remainder.Int64()])
-   }
-   return output
+	estOutputLen := int(float64(len(input)) * 1.4568) + 1
+	output := make([]byte, 0, estOutputLen)
+	
+	divident, remainder := new(gobig.Int), new(gobig.Int)
+	divident.SetBytes(input)
+	
+	for len(divident.Bits()) != 0 {
+		divident, remainder = divident.QuoRem(divident, qrCharsetLen, remainder)
+		output = append(output, qrCharset[remainder.Int64()])
+	}
+	
+	return output
 }
 
 func showFHIRExample() {
@@ -68,7 +71,7 @@ func showFHIRExample() {
 
 	rec := sha256.New()
 	rec.Write([]byte(fhir))
-        crc := rec.Sum(nil)
+	crc := rec.Sum(nil)
 	crcHex := hex.EncodeToString(crc)
 
 	fmt.Printf("    read in %d bytes of FHIR record\n",len(fhir))
@@ -96,9 +99,10 @@ func showFHIRExample() {
 		if err != nil {
 			panic(err.Error())
 		}
-                proofAsn1string := string(qrEncode(proofAsn1))
-                err2 := qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr.png")
-		if err2 != nil {
+		
+		proofAsn1string := string(qrEncode(proofAsn1))
+		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr.png")
+		if err != nil {
 			panic(err.Error())
 		}
 
