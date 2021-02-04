@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -14,6 +13,7 @@ import (
 	"github.com/privacybydesign/gabi"
         qrcode "github.com/skip2/go-qrcode"
 )
+
 // SHA256(example-fhir-nl.bin)= 67409d726c4213eabe52bd6ac5a8c4624f601c0421541facb6ee49ebb0d867a4
 const fileFhir = "example-fhir-nl.bin"
 
@@ -45,10 +45,10 @@ func showFHIRExample() {
 	fmt.Println("1) generate a new public key for the issuer")
 	issuerPk, _ := gabi.NewPublicKeyFromXML(issuerPkXml)
 
-        // Major cheat - we fill out this value; as current IRMA code does not
-        // actually propagate what is currently in the XML; as it assume that these
-        // public keys are subordinate to some sort of suitably annotated master xml.
-        issuerPk.Issuer="<NL Public Health demo authority>"
+	// Major cheat - we fill out this value; as current gabi code does not
+	// actually propagate what is currently in the XML; as it assume that these
+	// public keys are subordinate to some sort of suitably annotated master xml.
+	issuerPk.Issuer="<NL Public Health demo authority>"
 
 	fmt.Printf("    Issuer is: %v \n", issuerPk.Issuer)
 
@@ -72,10 +72,9 @@ func showFHIRExample() {
 	crcHex := hex.EncodeToString(crc)
 
 	fmt.Printf("    read in %d bytes of FHIR record\n",len(fhir))
-	fmt.Printf("    FHIR record checksum: %v", crcHex)
+	fmt.Printf("    FHIR record checksum: %v\n", crcHex)
 
-        // attributeValues := [][]byte{fhir, []byte(crcHex)}
-        attributeValues := [][]byte{fhir, []byte(crc)}
+	attributeValues := [][]byte{fhir, []byte(crc)}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
@@ -87,8 +86,8 @@ func showFHIRExample() {
 	fmt.Printf("4) Citizen (Holder) gets the issuer its public key (%v) to check the signature.\n", issuerPk.Issuer)
 
 	fmt.Println("5) Citizen (Holder) now goes into the wild")
-	count := 5
-	for i := 0; i < count; i++ {
+	
+	for i := 0; i < 5; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens!\n")
 		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
@@ -106,14 +105,9 @@ func showFHIRExample() {
 		qr := sha256.New()
 		qr.Write(proofAsn1)
 
-		// err1 := ioutil.WriteFile("qr.bin", proofAsn1, 0644)
-		// if err1 != nil {
-		// 	panic(err)
-		// }
+		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsn1string[:30])
 
-		fmt.Printf("       The QR code contains: %v.... (5.5bit encoded)\n", proofAsn1string[:30])
-
-		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the Qr code in bytes)\n", len(proofAsn1))
+		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the QR code in bytes)\n", len(proofAsn1))
 
 		fmt.Printf("\n")
 
@@ -130,7 +124,7 @@ func showFHIRExample() {
 		valHex := hex.EncodeToString(val)
 
 		fmt.Printf("       FHIR Record Hash : %v\n", crcHex)
-                fmt.Printf("       FHIR Stored Hash : %v\n", valHex)
+		fmt.Printf("       FHIR Stored Hash : %v\n", valHex)
 
 		if err != nil {
 			panic("Invalid proof")
@@ -139,6 +133,6 @@ func showFHIRExample() {
 			panic("Valid proof, but crc mismatch")
 		}
 
-		fmt.Printf("      Valid proof for time %d:\n", unixTimeSeconds)
+		fmt.Printf("      Valid proof for time %d\n", unixTimeSeconds)
 	}
 }
