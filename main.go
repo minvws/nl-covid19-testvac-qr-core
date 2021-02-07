@@ -79,16 +79,16 @@ func showFHIRExample() {
 	}
 	fmt.Printf("    read in %d of FHIR record level 1\n", len(fhirl1))
 
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
-	publicKey := privateKey.PublicKey
-	encryptedMessageL1 := RSA_OAEP_Encrypt(fhirl1, publicKey)
+	privateKeyl1, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
+	publicKeyl1 := privateKeyl1.PublicKey
+	encryptedMessageL1 := RSA_OAEP_Encrypt(fhirl1, publicKeyl1)
 
 	sha256_ekl1 := sha256.New()
 	sha256_ekl1.Write(encryptedMessageL1)
 
 	fmt.Printf("    Encrypted FHIR record level 1\n")
-	fmt.Printf("    	Private key: %v\n", privateKey)
-	fmt.Printf("    	Public key: %v\n", publicKey)
+	fmt.Printf("    	Private key: %v\n", privateKeyl1)
+	fmt.Printf("    	Public key: %v\n", publicKeyl1)
 	fmt.Printf("    	sha256 is: %v\n", hex.EncodeToString(sha256_ekl1.Sum(nil)))
 
 	// Do Enc or Level2
@@ -98,16 +98,16 @@ func showFHIRExample() {
 	}
 	fmt.Printf("    read in %d of FHIR record level 2\n", len(fhirl2))
 
-	privateKey, err = rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
-	publicKey = privateKey.PublicKey
-	encryptedMessageL2 := RSA_OAEP_Encrypt(fhirl2, publicKey)
+	privateKeyl2, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
+	publicKeyl2 := privateKeyl2.PublicKey
+	encryptedMessageL2 := RSA_OAEP_Encrypt(fhirl2, publicKeyl2)
 
 	sha256_ekl2 := sha256.New()
 	sha256_ekl2.Write(encryptedMessageL2)
 
 	fmt.Printf("    Encrypted FHIR record level 2\n")
-	fmt.Printf("    	Private key: %v\n", privateKey)
-	fmt.Printf("    	Public key: %v\n", publicKey)
+	fmt.Printf("    	Private key: %v\n", privateKeyl2)
+	fmt.Printf("    	Public key: %v\n", publicKeyl2)
 	fmt.Printf("    	sha256 is: %v\n", hex.EncodeToString(sha256_ekl2.Sum(nil)))
 
 	////
@@ -163,11 +163,15 @@ func showFHIRExample() {
 			fmt.Printf("       FHIR level1 Stored Hash : %v\n", verifiedValues[1])
 			fmt.Printf("      so this record was not tamped with.\n")
 
+			RSA_OAEP_Decrypt([]byte(verifiedValues[0]), *privateKeyl1)
+
 			rec2 := sha256.New()
 			rec2.Write([]byte(verifiedValues[2]))
 			fmt.Printf("       FHIR level2 Record Hash : %v\n", hex.EncodeToString(rec2.Sum(nil)))
 			fmt.Printf("       FHIR level2 Stored Hash : %v\n", verifiedValues[3])
 			fmt.Printf("      so this record was not tamped with.\n")
+
+			RSA_OAEP_Decrypt([]byte(verifiedValues[2]), *privateKeyl2)
 		}
 	}
 }
@@ -181,4 +185,17 @@ func RSA_OAEP_Encrypt(secretMessage []byte, key rsa.PublicKey) []byte {
 		panic(err.Error())
 	}
 	return ciphertext
+}
+
+//RSA_OAEP_Decrypt :
+func RSA_OAEP_Decrypt(cipherText []byte, privKey rsa.PrivateKey) []byte {
+	ct := cipherText
+	label := []byte("OAEP Encrypted")
+	rng := rand.Reader
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), rng, &privKey, ct, label)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("Plaintext:", string(plaintext))
+	return plaintext
 }
