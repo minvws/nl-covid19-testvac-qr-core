@@ -16,7 +16,7 @@ import (
 var BigOne = big.NewInt(1)
 var GabiSystemParameters = gabi.DefaultSystemParameters[2048]
 
-var AttributeTypes = []string{"FHIR", "sha256 of FHIR"}
+var AttributeTypes = []string{"FHIRL1", "sha256 of FHIRL1", "FHIRL2", "sha256 of FHIRL2"}
 
 type ProofSerialization struct {
 	UnixTimeSeconds   int64
