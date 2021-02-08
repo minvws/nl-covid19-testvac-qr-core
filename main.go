@@ -5,7 +5,9 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"hash"
 	"io/ioutil"
 	gobig "math/big"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
 	qrcode "github.com/skip2/go-qrcode"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // SHA256(example-fhir-nl.bin)= 67409d726c4213eabe52bd6ac5a8c4624f601c0421541facb6ee49ebb0d867a4
@@ -23,7 +26,47 @@ const fileFhir = "example-fhir-nl.bin"
 // const fileFhir = "example-fhir-cz.bin"
 
 func main() {
+	// record := reciveFHIRJSON()
+	// genPB(record)
 	showFHIRExample()
+}
+
+func reciveFHIRJSON() FHIRRecord {
+	// read file
+	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// json data
+	var obj FHIRRecord
+
+	// unmarshall it
+	err = json.Unmarshal(data, &obj)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	return obj
+}
+
+func genPB(entry FHIRRecord) {
+	// m, err := structpb.NewValue(entry)
+	// if err != nil {
+	// 	fmt.Println("error:", err)
+	// }
+
+	val := SmartVaccCert1{}
+	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	out := protojson.UnmarshalOptions{
+		AllowPartial: true,
+	}
+	out.Unmarshal(data, &val)
+	fmt.Printf("Out: %v", val)
 }
 
 var qrCharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
@@ -65,78 +108,65 @@ func showFHIRExample() {
 	issuerNonce := issuer.GenerateIssuerNonce()
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
-	// fhir, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.bin")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Printf("    read in %d of FHIR record\n", len(fhir))
+	///////
+	// Level 1
+	// pubKey, privateKeyl1 := verifierGeneratesPrivateKey()
+	// encryptedMessageL1, sha256_ekl1 := generateEncQRPayload("Vaccination-FHIR-Bundle - GC.1.bin", pubKey)
+
+	VBL1, err := ioutil.ReadFile("Vaccination-FHIR-Bundle-GC.1.bin")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		return
+	}
+
+	sha256_VBL1 := sha256.New()
+	sha256_VBL1.Write(VBL1)
 
 	///////
-	// Do Enc or Level1
-	fhirl1, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.1.bin")
+	// Level 2
+	// pubKey, privateKeyl1 := verifierGeneratesPrivateKey()
+	// encryptedMessageL1, sha256_ekl1 := generateEncQRPayload("Vaccination-FHIR-Bundle - GC.1.bin", pubKey)
+
+	VBL2, err := ioutil.ReadFile("Vaccination-FHIR-Bundle-GC.2.bin")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("File reading error", err)
+		return
 	}
-	fmt.Printf("    read in %d of FHIR record level 1\n", len(fhirl1))
 
-	privateKeyl1, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
-	publicKeyl1 := privateKeyl1.PublicKey
-	encryptedMessageL1 := RSA_OAEP_Encrypt(fhirl1, publicKeyl1)
+	sha256_VBL2 := sha256.New()
+	sha256_VBL2.Write(VBL2)
 
-	sha256_ekl1 := sha256.New()
-	sha256_ekl1.Write(encryptedMessageL1)
-
-	fmt.Printf("    Encrypted FHIR record level 1\n")
-	fmt.Printf("    	Private key: %v\n", privateKeyl1)
-	fmt.Printf("    	Public key: %v\n", publicKeyl1)
-	fmt.Printf("    	sha256 is: %v\n", hex.EncodeToString(sha256_ekl1.Sum(nil)))
-
-	// Do Enc or Level2
-	fhirl2, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.2.bin")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("    read in %d of FHIR record level 2\n", len(fhirl2))
-
-	privateKeyl2, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
-	publicKeyl2 := privateKeyl2.PublicKey
-	encryptedMessageL2 := RSA_OAEP_Encrypt(fhirl2, publicKeyl2)
-
-	sha256_ekl2 := sha256.New()
-	sha256_ekl2.Write(encryptedMessageL2)
-
-	fmt.Printf("    Encrypted FHIR record level 2\n")
-	fmt.Printf("    	Private key: %v\n", privateKeyl2)
-	fmt.Printf("    	Public key: %v\n", publicKeyl2)
-	fmt.Printf("    	sha256 is: %v\n", hex.EncodeToString(sha256_ekl2.Sum(nil)))
-
-	////
-
-	attributeValues := [][]byte{encryptedMessageL1, []byte(hex.EncodeToString(sha256_ekl1.Sum(nil))), encryptedMessageL2, []byte(hex.EncodeToString(sha256_ekl2.Sum(nil)))}
+	//
+	attributeValues := [][]byte{VBL1, []byte(hex.EncodeToString(sha256_VBL1.Sum(nil))), VBL2, []byte(hex.EncodeToString(sha256_VBL2.Sum(nil)))}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
 	if err != nil {
 		panic(err.Error())
 	}
+
 	fmt.Println("    sign and issue.")
 
 	fmt.Printf("4) Citizen (Holder) gets the issuer its public key (%v) to check the signature.\n", issuerPk.Issuer)
 
 	fmt.Println("5) Citizen (Holder) now goes into the wild")
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 2; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens!\n")
+
+		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
+		fmt.Printf("	Appliction sees that the Verifier is of type level 1\n")
+
 		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
 
-		proofAsn1, err := holder.DiscloseAllWithTime(cred)
+		proofAsn1, err := holder.DiscloseLevel1WithTime(cred)
 		if err != nil {
 			panic(err.Error())
 		}
 
 		proofAsn1string := string(qrEncode(proofAsn1))
-		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr.png")
+		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr_level1.png")
 		if err != nil {
 			panic(err.Error())
 		}
@@ -159,21 +189,62 @@ func showFHIRExample() {
 			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
 			rec1 := sha256.New()
 			rec1.Write([]byte(verifiedValues[0]))
-			fmt.Printf("       FHIR level1 Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
-			fmt.Printf("       FHIR level1 Stored Hash : %v\n", verifiedValues[1])
+			fmt.Printf("       FHIR level Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
+			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[1])
 			fmt.Printf("      so this record was not tamped with.\n")
 
-			RSA_OAEP_Decrypt([]byte(verifiedValues[0]), *privateKeyl1)
+			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
 
-			rec2 := sha256.New()
-			rec2.Write([]byte(verifiedValues[2]))
-			fmt.Printf("       FHIR level2 Record Hash : %v\n", hex.EncodeToString(rec2.Sum(nil)))
-			fmt.Printf("       FHIR level2 Stored Hash : %v\n", verifiedValues[3])
-			fmt.Printf("      so this record was not tamped with.\n")
-
-			RSA_OAEP_Decrypt([]byte(verifiedValues[2]), *privateKeyl2)
 		}
 	}
+
+	for i := 0; i < 2; i++ {
+		fmt.Printf("\n")
+		fmt.Printf("    * An Encounter happens!\n")
+
+		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
+		fmt.Printf("	Appliction sees that the Verifier is of type level 2\n")
+
+		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
+
+		proofAsn1, err := holder.DiscloseLevel2WithTime(cred)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		proofAsn1string := string(qrEncode(proofAsn1))
+		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr_level2.png")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		qr := sha256.New()
+		qr.Write(proofAsn1)
+
+		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsn1string[:30])
+
+		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the QR code in bytes)\n", len(proofAsn1))
+
+		fmt.Printf("\n")
+
+		fmt.Printf("      Verifier Scans the QR code to check proof against %v (public key of the issuer)\n", issuerPk.Issuer)
+
+		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
+		if err != nil {
+			fmt.Println("Invalid proof")
+		} else {
+			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
+			rec1 := sha256.New()
+			rec1.Write([]byte(verifiedValues[2]))
+			fmt.Printf("       FHIR level Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
+			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[3])
+			fmt.Printf("      so this record was not tamped with.\n")
+
+			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
+
+		}
+	}
+
 }
 
 //RSA_OAEP_Encrypt :
@@ -198,4 +269,31 @@ func RSA_OAEP_Decrypt(cipherText []byte, privKey rsa.PrivateKey) []byte {
 	}
 	fmt.Println("Plaintext:", string(plaintext))
 	return plaintext
+}
+
+func verifierGeneratesPrivateKey() (rsa.PublicKey, rsa.PrivateKey) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
+	if err != nil {
+		fmt.Println(err)
+	}
+	publicKey := privateKey.PublicKey
+	return publicKey, *privateKey
+}
+
+func generateEncQRPayload(fileName string, publicKey rsa.PublicKey) ([]byte, hash.Hash) {
+	fhirl1, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("    read in %d of FHIR record \n", len(fhirl1))
+
+	encryptedMessage := RSA_OAEP_Encrypt(fhirl1, publicKey)
+
+	sha256_ek := sha256.New()
+	sha256_ek.Write(encryptedMessage)
+
+	fmt.Printf("    Encrypted FHIR record\n")
+	fmt.Printf("    	Public key: %v\n", publicKey)
+	fmt.Printf("    	sha256 is: %v\n", hex.EncodeToString(sha256_ek.Sum(nil)))
+	return encryptedMessage, sha256_ek
 }
