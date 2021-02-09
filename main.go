@@ -16,7 +16,6 @@ import (
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
 	qrcode "github.com/skip2/go-qrcode"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // SHA256(example-fhir-nl.bin)= 67409d726c4213eabe52bd6ac5a8c4624f601c0421541facb6ee49ebb0d867a4
@@ -50,24 +49,24 @@ func reciveFHIRJSON() FHIRRecord {
 	return obj
 }
 
-func genPB(entry FHIRRecord) {
-	// m, err := structpb.NewValue(entry)
-	// if err != nil {
-	// 	fmt.Println("error:", err)
-	// }
+// func genPB(entry FHIRRecord) {
+// 	// m, err := structpb.NewValue(entry)
+// 	// if err != nil {
+// 	// 	fmt.Println("error:", err)
+// 	// }
 
-	// val := SmartVaccCert1{}
-	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
-	if err != nil {
-		fmt.Print(err)
-	}
+// 	// val := SmartVaccCert1{}
+// 	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
+// 	if err != nil {
+// 		fmt.Print(err)
+// 	}
 
-	out := protojson.UnmarshalOptions{
-		AllowPartial: true,
-	}
-	out.Unmarshal(data, &val)
-	fmt.Printf("Out: %v", val)
-}
+// 	out := protojson.UnmarshalOptions{
+// 		AllowPartial: true,
+// 	}
+// 	out.Unmarshal(data, &val)
+// 	fmt.Printf("Out: %v", val)
+// }
 
 var qrCharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
 var qrCharsetLen = gobig.NewInt(45)
