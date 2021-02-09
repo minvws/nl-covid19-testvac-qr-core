@@ -161,12 +161,12 @@ func showFHIRExample() {
 
 	fmt.Println("5) Citizen (Holder) now goes into the wild")
 
+	//Level 0 Encounter
 	for i := 0; i < 2; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens!\n")
 
-		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
-		fmt.Printf("	Application sees that the Verifier is of type level 0\n")
+		fmt.Printf("       Citizen selects the disclosion level (*Level 0*) for the Verifier\n")
 
 		fmt.Printf("       Citizen generates a unique/new QR code and holds it up.\n")
 
@@ -208,12 +208,12 @@ func showFHIRExample() {
 		}
 	}
 
+	//Level 1 Encounter
 	for i := 0; i < 1; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens!\n")
 
-		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
-		fmt.Printf("	Application sees that the Verifier is of type level 1\n")
+		fmt.Printf("       Citizen selects the disclosion level (*Level 1*) for the Verifier\n")
 
 		fmt.Printf("       Citizen generates a unique/new QR code and holds it up.\n")
 
@@ -246,7 +246,7 @@ func showFHIRExample() {
 			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
 			rec1 := sha256.New()
 			rec1.Write([]byte(verifiedValues[2]))
-			fmt.Printf("       FHIR level Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
+			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
 			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[3])
 			fmt.Printf("      so this record was not tampered with.\n")
 
@@ -255,12 +255,12 @@ func showFHIRExample() {
 		}
 	}
 
+	//Level 2 Encounter
 	for i := 0; i < 1; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens with a Boarder Guard!\n")
 
-		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
-		fmt.Printf("	Appliction sees that the Verifier is of type level 2\n")
+		fmt.Printf("       Citizen selects the disclosion level (*Level 2*) for the Verifier\n")
 
 		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
 
@@ -293,7 +293,7 @@ func showFHIRExample() {
 			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
 			rec1 := sha256.New()
 			rec1.Write([]byte(verifiedValues[4]))
-			fmt.Printf("       FHIR level Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
+			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
 			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[5])
 			fmt.Printf("      so this record was not tampered with.\n")
 
