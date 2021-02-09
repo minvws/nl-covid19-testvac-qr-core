@@ -1,13 +1,10 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hash"
 	"io/ioutil"
 	gobig "math/big"
 
@@ -305,55 +302,4 @@ func showFHIRExample() {
 		}
 	}
 
-}
-
-//RSA_OAEP_Encrypt :
-func RSA_OAEP_Encrypt(secretMessage []byte, key rsa.PublicKey) []byte {
-	label := []byte("OAEP Encrypted")
-	rng := rand.Reader
-	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rng, &key, secretMessage, label)
-	if err != nil {
-		panic(err.Error())
-	}
-	return ciphertext
-}
-
-//RSA_OAEP_Decrypt :
-func RSA_OAEP_Decrypt(cipherText []byte, privKey rsa.PrivateKey) []byte {
-	ct := cipherText
-	label := []byte("OAEP Encrypted")
-	rng := rand.Reader
-	plaintext, err := rsa.DecryptOAEP(sha256.New(), rng, &privKey, ct, label)
-	if err != nil {
-		panic(err.Error())
-	}
-	fmt.Println("Plaintext:", string(plaintext))
-	return plaintext
-}
-
-func verifierGeneratesPrivateKey() (rsa.PublicKey, rsa.PrivateKey) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048) // here 2048 is the number of bits for RSA
-	if err != nil {
-		fmt.Println(err)
-	}
-	publicKey := privateKey.PublicKey
-	return publicKey, *privateKey
-}
-
-func generateEncQRPayload(fileName string, publicKey rsa.PublicKey) ([]byte, hash.Hash) {
-	fhirl1, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("    read in %d of FHIR record \n", len(fhirl1))
-
-	encryptedMessage := RSA_OAEP_Encrypt(fhirl1, publicKey)
-
-	sha256_ek := sha256.New()
-	sha256_ek.Write(encryptedMessage)
-
-	fmt.Printf("    Encrypted FHIR record\n")
-	fmt.Printf("    	Public key: %v\n", publicKey)
-	fmt.Printf("    	sha256 is: %v\n", hex.EncodeToString(sha256_ek.Sum(nil)))
-	return encryptedMessage, sha256_ek
 }
