@@ -301,5 +301,4 @@ func showFHIRExample() {
 
 		}
 	}
-
 }
