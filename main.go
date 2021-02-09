@@ -211,7 +211,7 @@ func showFHIRExample() {
 		}
 	}
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 1; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens!\n")
 
@@ -258,7 +258,7 @@ func showFHIRExample() {
 		}
 	}
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 1; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens with a Boarder Guard!\n")
 
