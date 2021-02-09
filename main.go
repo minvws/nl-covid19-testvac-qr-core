@@ -56,7 +56,7 @@ func genPB(entry FHIRRecord) {
 	// 	fmt.Println("error:", err)
 	// }
 
-	val := SmartVaccCert1{}
+	// val := SmartVaccCert1{}
 	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
 	if err != nil {
 		fmt.Print(err)
