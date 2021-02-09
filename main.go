@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	gobig "math/big"
@@ -22,48 +21,8 @@ const fileFhir = "example-fhir-nl.bin"
 // const fileFhir = "example-fhir-cz.bin"
 
 func main() {
-	// record := reciveFHIRJSON()
-	// genPB(record)
 	showFHIRExample()
 }
-
-func reciveFHIRJSON() FHIRRecord {
-	// read file
-	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
-	if err != nil {
-		fmt.Print(err)
-	}
-
-	// json data
-	var obj FHIRRecord
-
-	// unmarshall it
-	err = json.Unmarshal(data, &obj)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	return obj
-}
-
-// func genPB(entry FHIRRecord) {
-// 	// m, err := structpb.NewValue(entry)
-// 	// if err != nil {
-// 	// 	fmt.Println("error:", err)
-// 	// }
-
-// 	// val := SmartVaccCert1{}
-// 	data, err := ioutil.ReadFile("./Vaccination-FHIR-Bundle-GC.json")
-// 	if err != nil {
-// 		fmt.Print(err)
-// 	}
-
-// 	out := protojson.UnmarshalOptions{
-// 		AllowPartial: true,
-// 	}
-// 	out.Unmarshal(data, &val)
-// 	fmt.Printf("Out: %v", val)
-// }
 
 var qrCharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
 var qrCharsetLen = gobig.NewInt(45)
@@ -203,8 +162,6 @@ func showFHIRExample() {
 			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[1])
 			fmt.Printf("      so this record was not tampered with.\n")
 
-			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
-
 		}
 	}
 
@@ -250,8 +207,6 @@ func showFHIRExample() {
 			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[3])
 			fmt.Printf("      so this record was not tampered with.\n")
 
-			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
-
 		}
 	}
 
@@ -296,8 +251,6 @@ func showFHIRExample() {
 			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
 			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[5])
 			fmt.Printf("      so this record was not tampered with.\n")
-
-			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
 
 		}
 	}
