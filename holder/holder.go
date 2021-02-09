@@ -32,6 +32,23 @@ func DiscloseAll(cred *gabi.Credential, challenge *big.Int) ([]byte, error) {
 	return Disclose(cred, maximumDisclosureChoices(cred), challenge)
 }
 
+func DiscloseLevel0WithTime(cred *gabi.Credential) ([]byte, error) {
+	return DiscloseWithTime(cred, level0DisclosureChoices(cred))
+}
+
+func level0DisclosureChoices(cred *gabi.Credential) []bool {
+	choices := make([]bool, len(cred.Attributes)-1)
+	for i, _ := range choices {
+		if i == 0 || i == 1 {
+			choices[i] = true
+		} else {
+			choices[i] = false
+		}
+	}
+
+	return choices
+}
+
 func DiscloseLevel1WithTime(cred *gabi.Credential) ([]byte, error) {
 	return DiscloseWithTime(cred, level1DisclosureChoices(cred))
 }
@@ -39,7 +56,7 @@ func DiscloseLevel1WithTime(cred *gabi.Credential) ([]byte, error) {
 func level1DisclosureChoices(cred *gabi.Credential) []bool {
 	choices := make([]bool, len(cred.Attributes)-1)
 	for i, _ := range choices {
-		if i == 0 || i == 1 {
+		if i == 2 || i == 3 {
 			choices[i] = true
 		} else {
 			choices[i] = false
@@ -56,7 +73,7 @@ func DiscloseLevel2WithTime(cred *gabi.Credential) ([]byte, error) {
 func level2DisclosureChoices(cred *gabi.Credential) []bool {
 	choices := make([]bool, len(cred.Attributes)-1)
 	for i, _ := range choices {
-		if i == 2 || i == 3 {
+		if i == 4 || i == 5 {
 			choices[i] = true
 		} else {
 			choices[i] = false

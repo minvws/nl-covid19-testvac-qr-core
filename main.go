@@ -109,11 +109,25 @@ func showFHIRExample() {
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
 	///////
+	// Level 0
+	// pubKey, privateKeyl1 := verifierGeneratesPrivateKey()
+	// encryptedMessageL1, sha256_ekl1 := generateEncQRPayload("Vaccination-FHIR-Bundle - GC.1.bin", pubKey)
+
+	VBL0, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.0.bin")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		return
+	}
+
+	sha256_VBL0 := sha256.New()
+	sha256_VBL0.Write(VBL0)
+
+	///////
 	// Level 1
 	// pubKey, privateKeyl1 := verifierGeneratesPrivateKey()
 	// encryptedMessageL1, sha256_ekl1 := generateEncQRPayload("Vaccination-FHIR-Bundle - GC.1.bin", pubKey)
 
-	VBL1, err := ioutil.ReadFile("Vaccination-FHIR-Bundle-GC.1.bin")
+	VBL1, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.1.bin")
 	if err != nil {
 		fmt.Println("File reading error", err)
 		return
@@ -127,7 +141,7 @@ func showFHIRExample() {
 	// pubKey, privateKeyl1 := verifierGeneratesPrivateKey()
 	// encryptedMessageL1, sha256_ekl1 := generateEncQRPayload("Vaccination-FHIR-Bundle - GC.1.bin", pubKey)
 
-	VBL2, err := ioutil.ReadFile("Vaccination-FHIR-Bundle-GC.2.bin")
+	VBL2, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.2.bin")
 	if err != nil {
 		fmt.Println("File reading error", err)
 		return
@@ -137,7 +151,7 @@ func showFHIRExample() {
 	sha256_VBL2.Write(VBL2)
 
 	//
-	attributeValues := [][]byte{VBL1, []byte(hex.EncodeToString(sha256_VBL1.Sum(nil))), VBL2, []byte(hex.EncodeToString(sha256_VBL2.Sum(nil)))}
+	attributeValues := [][]byte{VBL0, []byte(hex.EncodeToString(sha256_VBL0.Sum(nil))), VBL1, []byte(hex.EncodeToString(sha256_VBL1.Sum(nil))), VBL2, []byte(hex.EncodeToString(sha256_VBL2.Sum(nil)))}
 	ism := issuer.Issue(issuerPkXml, issuerSkXml, issuerNonce, attributeValues, icm)
 
 	cred, err := holder.CreateCredential(credBuilder, ism, attributeValues)
@@ -156,11 +170,11 @@ func showFHIRExample() {
 		fmt.Printf("    * An Encounter happens!\n")
 
 		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
-		fmt.Printf("	Appliction sees that the Verifier is of type level 1\n")
+		fmt.Printf("	Appliction sees that the Verifier is of type level 0\n")
 
 		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
 
-		proofAsn1, err := holder.DiscloseLevel1WithTime(cred)
+		proofAsn1, err := holder.DiscloseLevel0WithTime(cred)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -203,6 +217,53 @@ func showFHIRExample() {
 		fmt.Printf("    * An Encounter happens!\n")
 
 		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
+		fmt.Printf("	Appliction sees that the Verifier is of type level 1\n")
+
+		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
+
+		proofAsn1, err := holder.DiscloseLevel1WithTime(cred)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		proofAsn1string := string(qrEncode(proofAsn1))
+		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr_level1.png")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		qr := sha256.New()
+		qr.Write(proofAsn1)
+
+		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsn1string[:30])
+
+		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the QR code in bytes)\n", len(proofAsn1))
+
+		fmt.Printf("\n")
+
+		fmt.Printf("      Verifier Scans the QR code to check proof against %v (public key of the issuer)\n", issuerPk.Issuer)
+
+		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
+		if err != nil {
+			fmt.Println("Invalid proof")
+		} else {
+			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
+			rec1 := sha256.New()
+			rec1.Write([]byte(verifiedValues[2]))
+			fmt.Printf("       FHIR level Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
+			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[3])
+			fmt.Printf("      so this record was not tamped with.\n")
+
+			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
+
+		}
+	}
+
+	for i := 0; i < 2; i++ {
+		fmt.Printf("\n")
+		fmt.Printf("    * An Encounter happens with a Boarder Guard!\n")
+
+		fmt.Printf("	Citizen Scans a QR code of a Verifier.\n")
 		fmt.Printf("	Appliction sees that the Verifier is of type level 2\n")
 
 		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
@@ -235,9 +296,9 @@ func showFHIRExample() {
 		} else {
 			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
 			rec1 := sha256.New()
-			rec1.Write([]byte(verifiedValues[2]))
+			rec1.Write([]byte(verifiedValues[4]))
 			fmt.Printf("       FHIR level Record Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
-			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[3])
+			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[5])
 			fmt.Printf("      so this record was not tamped with.\n")
 
 			// RSA_OAEP_Decrypt([]byte(verifiedValues[0]), privateKeyl1)
