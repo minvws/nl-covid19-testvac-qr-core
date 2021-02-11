@@ -1,0 +1,29 @@
+name: Go
+
+on:
+  push:
+    branches: [ ehealth ]
+  pull_request:
+    branches: [ ehealth ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
+
+    - name: Build
+      run: go build issuer/cinterface/cinterface.go -buildmode=c-shared -o publish/issuer.dll
+
+    - name: Archive build results
+      uses: actions/upload-artifact@v2
+      with:
+        name: publish-folder
+        path: |
+          publish
