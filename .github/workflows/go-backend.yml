@@ -19,7 +19,7 @@ jobs:
         go-version: 1.15
 
     - name: Build
-      run: go build issuer/cinterface/cinterface.go -buildmode=c-shared -o publish/issuer.dll
+      run: go build -buildmode=c-shared -o publish/issuer.dll issuer/cinterface/cinterface.go
 
     - name: Archive build results
       uses: actions/upload-artifact@v2
