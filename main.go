@@ -186,7 +186,7 @@ func encounter(cred *gabi.Credential, level int, numbEnc int, issuerPk *gabi.Pub
 		if err != nil {
 			fmt.Println("Invalid proof")
 		} else {
-			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
+			fmt.Printf("       Valid proof (signature was correct) for time: %d (unix seconds since epoch)\n", unixTimeSeconds)
 			rec1 := sha256.New()
 			rec1.Write([]byte(verifiedValues[level*2])) // 0,2,4
 			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))

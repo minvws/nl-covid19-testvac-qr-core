@@ -56,61 +56,60 @@ To run this proof of concept code run the following command in the directory:
 Example Output:
 ```
 Testing issuer/holder/verifier packages:
-Issuer is:
-Holder is: 13892351912983104006807806281716141590342270061828377999447667110929743356782
+1) generate a new public key for the issuer
+    Issuer is: <NL Public Health demo authority> 
+2) generate a holder key
+    Holder is: 30903407693653827065565507804231738797510415673574501887342270311011859500140 
+3) generate issuer nonce for this holder; and create the credential.
+    sign and issue.
+4) Citizen (Holder) gets the issuer its public key (<NL Public Health demo authority>) to check the signature.
+5) Citizen (Holder) now goes into the wild
 
+    * An Encounter happens!
+       Citizen selects the disclosion level (*Level 0*) for the Verifier
+       Citizen generates a unique/new QR code and holds it up.
+       The QR code contains: UO515 HFQYO+BO02MVQ$904HVU+6R4.... (5.5bit / QR alphanumeric mode encoded)
+       Got proof size of 1378 bytes (i.e. the size of the QR code in bytes)
 
-An Encounter happens!
-Citizen generate a QR code and holds it up.
-Sha256 of the QR code is: 55baa7f5b66b0e2df0cc6fd01da15552c89d6677ae4efde7bec870ea6f441525
-Got proof size of 1037 bytes
+      Verifier Scans the QR code to check proof against <NL Public Health demo authority> (public key of the issuer)
+       Valid proof (signature was correct) for time: 1612879359 (unix seconds since epoch)
+       FHIR level Computed Hash : 58e01505581caa107821700293446ebcf55c298b34caa652451d510acdb60f9a
+       FHIR level Stored Hash   : 58e01505581caa107821700293446ebcf55c298b34caa652451d510acdb60f9a
+      so this record was not tampered with.
 
-Verifier Scans the QR code to check proof!
-Valid proof for time 1612271987:
-FHIR Record Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
+    * An Encounter happens!
+       Citizen selects the disclosion level (*Level 0*) for the Verifier
+       Citizen generates a unique/new QR code and holds it up.
+       The QR code contains: H:0K5ZT-:0BC2HO/K2-GK4A%.OP+EH.... (5.5bit / QR alphanumeric mode encoded)
+       Got proof size of 1378 bytes (i.e. the size of the QR code in bytes)
 
+      Verifier Scans the QR code to check proof against <NL Public Health demo authority> (public key of the issuer)
+       Valid proof (signature was correct) for time: 1612879359 (unix seconds since epoch)
+       FHIR level Computed Hash : 58e01505581caa107821700293446ebcf55c298b34caa652451d510acdb60f9a
+       FHIR level Stored Hash   : 58e01505581caa107821700293446ebcf55c298b34caa652451d510acdb60f9a
+      so this record was not tampered with.
 
-An Encounter happens!
-Citizen generate a QR code and holds it up.
-Sha256 of the QR code is: fc8a51a56a6498dce64f764dfeb4481d49f3e08b7ac413d292c06db1dbfb1838
-Got proof size of 1040 bytes
+    * An Encounter happens!
+       Citizen selects the disclosion level (*Level 1*) for the Verifier
+       Citizen generates a unique/new QR code and holds it up.
+       The QR code contains:  1TP**GBYES5HSTOUGR/L2394165EL.... (5.5bit / QR alphanumeric mode encoded)
+       Got proof size of 1390 bytes (i.e. the size of the QR code in bytes)
 
-Verifier Scans the QR code to check proof!
-Valid proof for time 1612271987:
-FHIR Record Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
+      Verifier Scans the QR code to check proof against <NL Public Health demo authority> (public key of the issuer)
+       Valid proof (signature was correct) for time: 1612879359 (unix seconds since epoch)
+       FHIR level Computed Hash : d8c6278ce528602ef58a7accd3e68dfaf6fdda8609fe8e2d58982cae2eca8d46
+       FHIR level Stored Hash   : d8c6278ce528602ef58a7accd3e68dfaf6fdda8609fe8e2d58982cae2eca8d46
+      so this record was not tampered with.
 
+    * An Encounter happens with a Border Guard!
+       Citizen selects the disclosion level (*Level 2*) for the Verifier
+       Citizen generate a unique/new QR code and holds it up.
+       The QR code contains: 8..7-**:T3SQTHWZWR-1FQ2A+83/JH.... (5.5bit / QR alphanumeric mode encoded)
+       Got proof size of 1399 bytes (i.e. the size of the QR code in bytes)
 
-An Encounter happens!
-Citizen generate a QR code and holds it up.
-Sha256 of the QR code is: 950dedfc067266f93c77b04b646de966c165b1973ce1b3f3bb9286f84309e681
-Got proof size of 1039 bytes
-
-Verifier Scans the QR code to check proof!
-Valid proof for time 1612271987:
-FHIR Record Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-
-
-An Encounter happens!
-Citizen generate a QR code and holds it up.
-Sha256 of the QR code is: 01ee3b2b2524fdbf5a2714a3e1362f743984f714851398c431e6896d0b41e1be
-Got proof size of 1038 bytes
-
-Verifier Scans the QR code to check proof!
-Valid proof for time 1612271987:
-FHIR Record Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-
-
-An Encounter happens!
-Citizen generate a QR code and holds it up.
-Sha256 of the QR code is: 3ba04f3bcec8504f94f6cb8cb6124222c0d462ed407d208b5cbb52f0355e4049
-Got proof size of 1038 bytes
-
-Verifier Scans the QR code to check proof!
-Valid proof for time 1612271987:
-FHIR Record Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
-FHIR Stored Hash : f38dc38f61c78d6b80c4b8af18fdf6b78fd5dd68c6f0d4878d21e9f8363f9f0b
+      Verifier Scans the QR code to check proof against <NL Public Health demo authority> (public key of the issuer)
+       Valid proof (signature was correct) for time: 1612879359 (unix seconds since epoch)
+       FHIR level Computed Hash : 5ccd2e0f0accc1ad0051b317bdf2d222f757e7fc443e4c8db202d242a7115569
+       FHIR level Stored Hash   : 5ccd2e0f0accc1ad0051b317bdf2d222f757e7fc443e4c8db202d242a7115569
+      so this record was not tampered with.
 ```
