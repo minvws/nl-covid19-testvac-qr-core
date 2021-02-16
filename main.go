@@ -11,6 +11,7 @@ import (
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
 	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
 	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/big"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
@@ -42,20 +43,43 @@ func qrEncode(input []byte) []byte {
 	return output
 }
 
+// showFHIRExample :
 func showFHIRExample() {
+	// Country 1
+	issuerPk, credBuilder, icm, issuerNonce := issuerCreation(issuerPkXml, "NL")
+
+	cred := holderGen(issuerPk, credBuilder, icm, issuerNonce)
+
+	encounter(cred, 0, 2, issuerPk)
+	encounter(cred, 1, 1, issuerPk)
+	encounter(cred, 2, 1, issuerPk)
+
+	// Country 2
+	issuerPkDE, credBuilderDE, icmDE, issuerNonceDE := issuerCreation(issuerPkXml, "DE")
+
+	credDE := holderGen(issuerPkDE, credBuilderDE, icmDE, issuerNonceDE)
+
+	encounter(credDE, 0, 2, issuerPkDE)
+	encounter(credDE, 1, 1, issuerPkDE)
+	encounter(credDE, 2, 1, issuerPkDE)
+}
+
+//issuerCreation : creates a new public key for the issuer from the main key
+//returns the issuers public key,
+func issuerCreation(inputKey string, inputCountry string) (*gabi.PublicKey, *gabi.CredentialBuilder, *gabi.IssueCommitmentMessage, *big.Int) {
 	fmt.Println("Testing issuer/holder/verifier packages:")
 
-	fmt.Println("1) generate a new public key for the issuer")
-	issuerPk, _ := gabi.NewPublicKeyFromXML(issuerPkXml)
+	fmt.Println("1) generate a new public key for the issuer who is " + inputCountry)
+	issuerPk, _ := gabi.NewPublicKeyFromXML(inputKey)
 
 	// Major cheat - we fill out this value; as current IRMA code does not
 	// actually propagate what is currently in the XML; as it assume that these
 	// public keys are subordinate to some sort of suitably annotated master xml.
-	issuerPk.Issuer = "<NL Public Health demo authority>"
+	issuerPk.Issuer = "<" + inputCountry + " Public Health demo authority>"
 
 	fmt.Printf("    Issuer is: %v \n", issuerPk.Issuer)
 
-	fmt.Println("2) generate a holder key")
+	fmt.Println("2) generate a holder key " + inputCountry)
 	holderSk := holder.GenerateHolderSk()
 	fmt.Printf("    Holder is: %v \n", holderSk.String())
 
@@ -63,6 +87,10 @@ func showFHIRExample() {
 	issuerNonce := issuer.GenerateIssuerNonce()
 	credBuilder, icm := holder.CreateCommitment(issuerPk, issuerNonce, holderSk)
 
+	return issuerPk, credBuilder, icm, issuerNonce
+}
+
+func holderGen(issuerPk *gabi.PublicKey, credBuilder *gabi.CredentialBuilder, icm *gabi.IssueCommitmentMessage, issuerNonce *big.Int) *gabi.Credential {
 	///////
 	// Level 0
 	// pubKey, privateKeyl1 := verifierGeneratesPrivateKey()
@@ -71,7 +99,6 @@ func showFHIRExample() {
 	VBL0, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.0.bin")
 	if err != nil {
 		fmt.Println("File reading error", err)
-		return
 	}
 
 	sha256_VBL0 := sha256.New()
@@ -85,7 +112,6 @@ func showFHIRExample() {
 	VBL1, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.1.bin")
 	if err != nil {
 		fmt.Println("File reading error", err)
-		return
 	}
 
 	sha256_VBL1 := sha256.New()
@@ -99,7 +125,6 @@ func showFHIRExample() {
 	VBL2, err := ioutil.ReadFile("Vaccination-FHIR-Bundle - GC.2.bin")
 	if err != nil {
 		fmt.Println("File reading error", err)
-		return
 	}
 
 	sha256_VBL2 := sha256.New()
@@ -119,23 +144,29 @@ func showFHIRExample() {
 	fmt.Printf("4) Citizen (Holder) gets the issuer its public key (%v) to check the signature.\n", issuerPk.Issuer)
 
 	fmt.Println("5) Citizen (Holder) now goes into the wild")
+	return cred
+}
 
-	//Level 0 Encounter
-	for i := 0; i < 2; i++ {
+func encounter(cred *gabi.Credential, level int, numbEnc int, issuerPk *gabi.PublicKey) {
+	for i := 0; i < numbEnc; i++ {
 		fmt.Printf("\n")
 		fmt.Printf("    * An Encounter happens!\n")
 
-		fmt.Printf("       Citizen selects the disclosion level (*Level 0*) for the Verifier\n")
+		fmt.Printf("       Citizen selects the disclosion level (*Level " + fmt.Sprint(level) + "*) for the Verifier\n")
 
 		fmt.Printf("       Citizen generates a unique/new QR code and holds it up.\n")
 
-		proofAsn1, err := holder.DiscloseLevel0WithTime(cred)
-		if err != nil {
-			panic(err.Error())
+		var proofAsn1 []byte
+		if level == 1 {
+			proofAsn1, _ = holder.DiscloseLevel1WithTime(cred)
+		} else if level == 2 {
+			proofAsn1, _ = holder.DiscloseLevel2WithTime(cred)
+		} else {
+			proofAsn1, _ = holder.DiscloseLevel0WithTime(cred)
 		}
 
-		proofAsn1string := string(qrEncode(proofAsn1))
-		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr_level1.png")
+		proofAsnstring := string(qrEncode(proofAsn1))
+		err := qrcode.WriteFile(proofAsnstring, qrcode.Medium, 512, "qr_level"+fmt.Sprint(level)+".png")
 		if err != nil {
 			panic(err.Error())
 		}
@@ -143,7 +174,7 @@ func showFHIRExample() {
 		qr := sha256.New()
 		qr.Write(proofAsn1)
 
-		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsn1string[:30])
+		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsnstring[:30])
 
 		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the QR code in bytes)\n", len(proofAsn1))
 
@@ -157,99 +188,9 @@ func showFHIRExample() {
 		} else {
 			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
 			rec1 := sha256.New()
-			rec1.Write([]byte(verifiedValues[0]))
+			rec1.Write([]byte(verifiedValues[level*2])) // 0,2,4
 			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
-			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[1])
-			fmt.Printf("      so this record was not tampered with.\n")
-
-		}
-	}
-
-	//Level 1 Encounter
-	for i := 0; i < 1; i++ {
-		fmt.Printf("\n")
-		fmt.Printf("    * An Encounter happens!\n")
-
-		fmt.Printf("       Citizen selects the disclosion level (*Level 1*) for the Verifier\n")
-
-		fmt.Printf("       Citizen generates a unique/new QR code and holds it up.\n")
-
-		proofAsn1, err := holder.DiscloseLevel1WithTime(cred)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		proofAsn1string := string(qrEncode(proofAsn1))
-		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr_level1.png")
-		if err != nil {
-			panic(err.Error())
-		}
-
-		qr := sha256.New()
-		qr.Write(proofAsn1)
-
-		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsn1string[:30])
-
-		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the QR code in bytes)\n", len(proofAsn1))
-
-		fmt.Printf("\n")
-
-		fmt.Printf("      Verifier Scans the QR code to check proof against %v (public key of the issuer)\n", issuerPk.Issuer)
-
-		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
-		if err != nil {
-			fmt.Println("Invalid proof")
-		} else {
-			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
-			rec1 := sha256.New()
-			rec1.Write([]byte(verifiedValues[2]))
-			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
-			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[3])
-			fmt.Printf("      so this record was not tampered with.\n")
-
-		}
-	}
-
-	//Level 2 Encounter
-	for i := 0; i < 1; i++ {
-		fmt.Printf("\n")
-		fmt.Printf("    * An Encounter happens with a Boarder Guard!\n")
-
-		fmt.Printf("       Citizen selects the disclosion level (*Level 2*) for the Verifier\n")
-
-		fmt.Printf("       Citizen generate a unique/new QR code and holds it up.\n")
-
-		proofAsn1, err := holder.DiscloseLevel2WithTime(cred)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		proofAsn1string := string(qrEncode(proofAsn1))
-		err = qrcode.WriteFile(proofAsn1string, qrcode.Medium, 512, "qr_level2.png")
-		if err != nil {
-			panic(err.Error())
-		}
-
-		qr := sha256.New()
-		qr.Write(proofAsn1)
-
-		fmt.Printf("       The QR code contains: %v.... (5.5bit / QR alphanumeric mode encoded)\n", proofAsn1string[:30])
-
-		fmt.Printf("       Got proof size of %d bytes (i.e. the size of the QR code in bytes)\n", len(proofAsn1))
-
-		fmt.Printf("\n")
-
-		fmt.Printf("      Verifier Scans the QR code to check proof against %v (public key of the issuer)\n", issuerPk.Issuer)
-
-		verifiedValues, unixTimeSeconds, err := verifier.Verify(issuerPk, proofAsn1)
-		if err != nil {
-			fmt.Println("Invalid proof")
-		} else {
-			fmt.Printf("       Valid proof for time %d:\n", unixTimeSeconds)
-			rec1 := sha256.New()
-			rec1.Write([]byte(verifiedValues[4]))
-			fmt.Printf("       FHIR level Computed Hash : %v\n", hex.EncodeToString(rec1.Sum(nil)))
-			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[5])
+			fmt.Printf("       FHIR level Stored Hash : %v\n", verifiedValues[level*2+1]) // 1,3,5
 			fmt.Printf("      so this record was not tampered with.\n")
 
 		}
