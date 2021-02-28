@@ -15,6 +15,8 @@
 
 \DeclareMathOperator{\shake}{SHAKE256}
 \DeclareMathOperator{\asn}{ASN1}
+\DeclareMathOperator{\der}{DER}
+\DeclareMathOperator{\derasn}{DER-ASN1}
 \DeclareMathOperator{\sha}{SHA3}
 
 \title{Hashing into quadratic residues \\ modulo a safe prime composite}
@@ -100,9 +102,17 @@ In this section we describe the cryptographic hash function $H_n$ in more detail
 
 Generally the construction below can be done for any hash function $H$ of sufficiently long output length, but for concreteness we take $H(x) = \shake(x, d)$. Here $\shake$ from the $\sha$ function family is a so-called Extendible Output Function (XOF): a function that has variable output length, specified in bits as the second parameter $d$, with the property that for any fixed $d$ the function $\shake(\cdot, d)$ is a cryptographic hash function, and moreover if $d' > d$ then the first $d$ bits of $\shake(\cdot, d')$ coincide with $\shake(\cdot, d)$.
 
-Let $L_n = |n|$ be the length in bits of the modulus (i.e. 1024, 2048 or 4096). As the theorem above states, for the security of $H_n$ it is important that the cryptographic hash function $H$ has the appropriate maximum output; specifically, its output should be smaller than or equal to $(n-1)/2$. Now since $\shake(\cdot, d)$ outputs $d$ bits the upper limit of its output is $2^d$ instead of $(n-1)/2$. Setting $d = L_n-1 = |(n-1)/2|$, our hash functions will thus sometimes output an integer smaller than $2^d$ but larger than $(n-1)/2$. We can ``fix'' that by prepending our input bytes with a counter $i$ starting at 0, i.e. when hashing $x$ we return $H(0 || x)$ if that is below the upper bound, and if it exceeds $(n-1)/2$ we increment $i$ until $H(i || x) \leq (n-1)/2$. We do the same in the (unlikely) case that $H$ outputs 0 or 1. To prevent attacks where $x$ is crafted with a specific $i$ as its first few bits, one should use an encoding such as $\asn$ for $i || x$.
+Let $L_n = |n|$ be the length in bits of the modulus (i.e. 1024, 2048 or 4096). As the theorem above states, for the security of $H_n$ it is important that the cryptographic hash function $H$ has the appropriate maximum output; specifically, its output should be smaller than or equal to $(n-1)/2$. Now since $\shake(\cdot, d)$ outputs $d$ bits the upper limit of its output is $2^d$ instead of $(n-1)/2$. Setting $d = L_n-1 = |(n-1)/2|$, our hash functions will thus sometimes output an integer smaller than $2^d$ but larger than $(n-1)/2$. We can ``fix'' that by prepending our input bytes with a counter $i$ starting at 0, i.e. when hashing $x$ we return $H(0 || x)$ if that is below the upper bound, and if it exceeds $(n-1)/2$ we increment $i$ until $H(i || x) \leq (n-1)/2$. We do the same in the (unlikely) case that $H$ outputs 0 or 1. To prevent attacks where $x$ is crafted with a specific $i$ as its first few bits, one should use an encoding such as $\derasn$ for $i || x$.
+Note that this does not mean that an implementation has to include a generic $\asn$ parser; instead one can work out once and then hardcode the bytes of a $\der$ encoding of the following $\asn$ sequence:
 
-Finally, in implementations it might be that it is possible to specify the output length of $\shake$ only in bytes instead of in bits. In this case, one can simply request $L_n/8$ output bytes and then discard the rightmost bit to end up with the required $d = L_n-1$ bits.
+\begin{verbatim}
+HashInput ::= SEQUENCE {
+  i INTEGER,
+  x OCTET STRING
+}
+\end{verbatim}
+
+\noindent Finally, in implementations it might only be possible to specify the output length of $\shake$ in bytes instead of in bits. In this case, one can simply request $L_n/8$ output bytes and then discard the rightmost bit to end up with the required $d = L_n-1$ bits.
 
 A description of the algorithm computing $H_n$ summarizing the above may be found in pseudocode below. We assume there that $\shake$ takes its output length as the second parameter in bits.
 
@@ -112,7 +122,7 @@ A description of the algorithm computing $H_n$ summarizing the above may be foun
     \Function{$H_n$}{$x$}
       \State $i \gets 0$
       \Repeat
-        \State $O \gets \shake(\asn(i, x), L_n-1)$
+        \State $O \gets \shake(\derasn(i, x), L_n-1)$
         \State $i \gets i + 1$
       \Until{$1 < O \leq (n-1)/2$}
       \State \Return{$O^2 \bmod n$}
