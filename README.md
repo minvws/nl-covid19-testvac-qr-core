@@ -66,7 +66,7 @@ Testing issuer/holder/verifier packages:
 5) Citizen (Holder) now goes into the wild
 
     * An Encounter happens!
-       Citizen selects the disclosion level (*Level 0*) for the Verifier
+       Citizen selects the disclosure level (*Level 0*) for the Verifier
        Citizen generates a unique/new QR code and holds it up.
        The QR code contains: UO515 HFQYO+BO02MVQ$904HVU+6R4.... (5.5bit / QR alphanumeric mode encoded)
        Got proof size of 1378 bytes (i.e. the size of the QR code in bytes)
@@ -78,7 +78,7 @@ Testing issuer/holder/verifier packages:
       so this record was not tampered with.
 
     * An Encounter happens!
-       Citizen selects the disclosion level (*Level 0*) for the Verifier
+       Citizen selects the disclosure level (*Level 0*) for the Verifier
        Citizen generates a unique/new QR code and holds it up.
        The QR code contains: H:0K5ZT-:0BC2HO/K2-GK4A%.OP+EH.... (5.5bit / QR alphanumeric mode encoded)
        Got proof size of 1378 bytes (i.e. the size of the QR code in bytes)
@@ -90,7 +90,7 @@ Testing issuer/holder/verifier packages:
       so this record was not tampered with.
 
     * An Encounter happens!
-       Citizen selects the disclosion level (*Level 1*) for the Verifier
+       Citizen selects the disclosure level (*Level 1*) for the Verifier
        Citizen generates a unique/new QR code and holds it up.
        The QR code contains:  1TP**GBYES5HSTOUGR/L2394165EL.... (5.5bit / QR alphanumeric mode encoded)
        Got proof size of 1390 bytes (i.e. the size of the QR code in bytes)
@@ -102,7 +102,7 @@ Testing issuer/holder/verifier packages:
       so this record was not tampered with.
 
     * An Encounter happens with a Border Guard!
-       Citizen selects the disclosion level (*Level 2*) for the Verifier
+       Citizen selects the disclosure level (*Level 2*) for the Verifier
        Citizen generate a unique/new QR code and holds it up.
        The QR code contains: 8..7-**:T3SQTHWZWR-1FQ2A+83/JH.... (5.5bit / QR alphanumeric mode encoded)
        Got proof size of 1399 bytes (i.e. the size of the QR code in bytes)
