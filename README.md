@@ -1,6 +1,8 @@
 # CoronaTester CTCL
 
-This is a proof of concept (PoC) for creating a QR code system for proving that one has had a valid negative test result or a vaccination record (FHIR). 
+This is a proof of concept (PoC) for creating a QR code system for proving that one has had a valid vaccination record (FHIR, see https://fhir.org).
+
+The core of this code is _also_ used to convey a negative test result in the CoronaCheck app pair currently being build in the Netherlands. For more information about that code base can be found in the repositories https://github.com/minvws/nl-covid19-coronacheck-app-coordination, https://github.com/minvws/nl-covid19-coronacheck-app-android, https://github.com/minvws/nl-covid19-coronacheck-app-ios.
 
 Key features to demonstrate are
 
