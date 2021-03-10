@@ -14,5 +14,5 @@ For bug reports, feedback, suggestions and contributions are most welcome; see t
 
 For security reports - see the security tab in this repository:
 
-	https://github.com/minvws/nl-covid19-coronatester-ctcl-core-private/security/policy
+	https://github.com/minvws/nl-covid19-testvac-qr-core/security/policy
 

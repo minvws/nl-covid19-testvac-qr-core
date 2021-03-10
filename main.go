@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	gobig "math/big"
 
-	"github.com/minvws/nl-covid19-coronatester-ctcl-core/holder"
-	"github.com/minvws/nl-covid19-coronatester-ctcl-core/issuer"
-	"github.com/minvws/nl-covid19-coronatester-ctcl-core/verifier"
+	"github.com/minvws/nl-covid19-testvac-qr-core/holder"
+	"github.com/minvws/nl-covid19-testvac-qr-core/issuer"
+	"github.com/minvws/nl-covid19-testvac-qr-core/verifier"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 	qrcode "github.com/skip2/go-qrcode"

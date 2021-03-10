@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/go-errors/errors"
-	"github.com/minvws/nl-covid19-coronatester-ctcl-core/common"
+	"github.com/minvws/nl-covid19-testvac-qr-core/common"
 	"github.com/privacybydesign/gabi"
 	"github.com/privacybydesign/gabi/big"
 )
